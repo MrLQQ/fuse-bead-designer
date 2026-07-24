@@ -1,8 +1,29 @@
 import math
+import sys
 
 import pytest
 
 from fuse_bead_designer.boards import STANDARD_CANDIDATES, select_board
+
+
+REQUIRED_STANDARD_CANDIDATES = (
+    (29, 29),
+    (58, 29),
+    (29, 58),
+    (58, 58),
+    (87, 58),
+    (58, 87),
+)
+
+
+def _independent_score(candidate, source_aspect, detail_score):
+    width, height = candidate
+    board_count = (width // 29) * (height // 29)
+    return (
+        abs(math.log((width / height) / source_aspect))
+        + max(0.0, detail_score - min(width, height) / 58)
+        + 0.08 * max(0, board_count - 1)
+    )
 
 
 def test_wide_subject_prefers_two_horizontal_boards():
@@ -35,12 +56,27 @@ def test_more_than_four_boards_requires_confirmation():
     assert selected.requires_confirmation is True
 
 
-def test_balanced_subject_exposes_only_standard_close_alternatives():
-    selected = select_board(1500, 1000, detail_score=0.2)
+def test_standard_candidates_match_the_required_literal_dimensions():
+    assert STANDARD_CANDIDATES == REQUIRED_STANDARD_CANDIDATES
+
+
+def test_balanced_subject_exposes_close_alternatives_by_independent_score():
+    source_aspect = 1500 / 1000
+    detail_score = 0.2
+    selected = select_board(1500, 1000, detail_score=detail_score)
+    selected_score = _independent_score(
+        (selected.width, selected.height), source_aspect, detail_score
+    )
 
     assert selected.alternatives
     assert (selected.width, selected.height) not in selected.alternatives
-    assert all(candidate in STANDARD_CANDIDATES for candidate in selected.alternatives)
+    assert selected.score == pytest.approx(selected_score)
+    assert all(candidate in REQUIRED_STANDARD_CANDIDATES for candidate in selected.alternatives)
+    assert all(
+        abs(_independent_score(candidate, source_aspect, detail_score) - selected_score)
+        <= 0.05
+        for candidate in selected.alternatives
+    )
 
 
 def test_standard_selection_is_a_standard_candidate_with_matching_board_count():
@@ -84,3 +120,22 @@ def test_subject_width_must_be_positive_and_finite(subject_width):
 def test_max_boards_must_allow_at_least_one_board():
     with pytest.raises(ValueError, match="max_boards must be a positive integer"):
         select_board(1000, 1000, max_boards=0)
+
+
+@pytest.mark.parametrize(
+    ("subject_width", "subject_height", "expected_dimensions"),
+    [
+        (sys.float_info.max, 5e-324, (58, 29)),
+        (5e-324, sys.float_info.max, (29, 58)),
+    ],
+)
+def test_extreme_finite_subject_dimensions_select_a_finite_score(
+    subject_width, subject_height, expected_dimensions
+):
+    try:
+        selected = select_board(subject_width, subject_height)
+    except (ValueError, ZeroDivisionError) as error:
+        pytest.fail(f"finite positive dimensions must not fail: {error}")
+
+    assert (selected.width, selected.height) == expected_dimensions
+    assert math.isfinite(selected.score)

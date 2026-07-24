@@ -67,7 +67,7 @@ def select_board(
             alternatives=(),
         )
 
-    source_aspect = float(subject_width) / float(subject_height)
+    source_log_aspect = math.log(subject_width) - math.log(subject_height)
     candidates = []
     for index, (width, height) in enumerate(STANDARD_CANDIDATES):
         board_columns = width // MODULE_SIZE
@@ -78,7 +78,7 @@ def select_board(
         score = _candidate_score(
             width=width,
             height=height,
-            source_aspect=source_aspect,
+            source_log_aspect=source_log_aspect,
             detail_score=float(detail_score),
             board_count=board_count,
         )
@@ -114,11 +114,11 @@ def _candidate_score(
     *,
     width: int,
     height: int,
-    source_aspect: float,
+    source_log_aspect: float,
     detail_score: float,
     board_count: int,
 ) -> float:
-    aspect_loss = abs(math.log((width / height) / source_aspect))
+    aspect_loss = abs(math.log(width / height) - source_log_aspect)
     detail_penalty = max(0.0, detail_score - min(width, height) / 58)
     board_penalty = 0.08 * max(0, board_count - 1)
     return aspect_loss + detail_penalty + board_penalty
