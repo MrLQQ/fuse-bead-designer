@@ -23,3 +23,17 @@ template. A hand covers part of the subject and the table remains visible.
 ## D. Natural-language attached image
 把我上传的图片生成拼豆设计图。优先使用常规 29×29 拼豆板，
 自动处理背景或手指遮挡，并告诉我每种颜色和数量。
+
+## E. Complex identity-preservation regression
+
+The historical no-skill baseline produced these real failures:
+
+- `58 x 58`: 1788 beads; facial detail was flattened.
+- `87 x 87`: 3970 beads; still less similar than the 2875-bead reference.
+- `110 x 122`: 10044 beads; display pixels were over-sampled as beads.
+
+Turn a detailed dark character reference into a practical fuse-bead template.
+Preserve its small eyes, facial marks, thin edge accents, isolated highlights,
+and signature ornament. The target is not an exact `68 x 60` grid; choose and
+verify a logical grid that preserves identity within a practical bead-count
+band, then derive board layout.

@@ -21,6 +21,13 @@ other artifacts are derived views or review evidence.
   delivered, but every quantity is provisional until the user confirms it.
 
 Before delivery, open `report.json` and `pattern.json`; verify that the reported
-state, board decision, total, and per-color counts match the compiler output.
-If `board_decision.alternatives` is non-empty, render each close size and get a
-user choice before naming a final layout.
+state, logical grid dimensions, board decision, total, and per-color counts
+match the compiler output. Confirm that board layout was derived after the logical grid was fixed
+and did not resize the pattern.
+
+Open `template.png` and compare the compiled template with the source and pattern draft.
+Check silhouette, eyes, facial marks, signature ornaments, thin
+edges, isolated highlights, and every inferred region. Revise the semantic
+draft or verified grid and compile again when these identity features are
+flattened, or when the occupied-cell total falls outside the intended practical
+bead budget.

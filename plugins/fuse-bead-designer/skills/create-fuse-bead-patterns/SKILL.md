@@ -1,6 +1,6 @@
 ---
 name: create-fuse-bead-patterns
-description: Use when turning finished bead photos, pixel art, illustrations, or high-resolution images into 拼豆图纸, 拼豆模板, or 像素拼豆 with compiler-verified color counts, bead quantities, board choices, palettes, and explicit uncertainty.
+description: Use when a user provides a finished bead photo, pixel art, illustration, or high-resolution image and asks for 拼豆图纸, 拼豆模板, 像素拼豆, a fuse-bead pattern, or bead quantities.
 ---
 
 # Create Fuse Bead Patterns
@@ -13,9 +13,12 @@ Request approval before installing a missing runtime dependency.
 After approval, install it internally; do not ask the user to copy or run the
 installation command.
 
-Create a clean semantic input first; compile its cells, counts, and artifacts
-with the bundled deterministic compiler. `pattern.json`, not an image model or
-a hand-written grid, is the sole source of truth for bead quantities.
+Create or restore a clean logical pattern first, then compile its cells, counts,
+board layout, and artifacts deterministically. `pattern.json`, not an image
+model or a hand-written grid, is the sole source of truth for bead quantities.
+
+**Fix pattern dimensions before deriving board layout.** A 29-cell board is
+manufacturing metadata, never a target used to resample the art.
 
 ## Workflow / 工作流
 
@@ -23,61 +26,87 @@ Perform these steps in order:
 
 1. Inspect the image at full size; do not downsample existing pixel art merely
    to make a smaller pattern.
-2. Classify it as `finished-bead-photo`, `pixel-art`, or
-   `high-resolution-image`. Read [input-routing.md](references/input-routing.md)
-   for routing and stop conditions.
+2. Classify the original as `finished-bead-photo`, `pixel-art`, or
+   `high-resolution-image`. `pattern-draft` is the compiler-ready intermediate.
+   Read [input-routing.md](references/input-routing.md) and follow that source
+   branch and its stop conditions.
 3. Identify one intended subject and every interference source (hands, tools,
    table, shadows, glare, pegboard, reflections, or background). Stop and ask
    the user to choose if multiple plausible subjects remain.
-4. Decide whether semantic reconstruction is needed. For a finished-bead photo,
-   isolate the beads, remove non-subject interference, and correct perspective.
-   For pixel art, preserve its logical pixels. For a high-resolution image,
-   make a clean, flat subject intermediate before sampling.
+4. Prepare the route input. Rectify a finished-bead photo into a declared grid;
+   preserve pixel art's logical pixels; use image generation or editing to
+   create a semantic pattern draft for a high-resolution image. Follow
+   [pattern-draft-contract.md](references/pattern-draft-contract.md) whenever
+   creating or restoring a draft.
 5. Mark uncertainty before compiling. Infer only a small, structurally
    recoverable occlusion; record its cells and use `inferred-low`. A large,
    identity-defining, or unresolved occlusion is `review-required`; stop when
    the host cannot resolve it safely. Never treat a hand as beads.
-6. Choose board and palette constraints. Prefer standard 29-cell modules;
-   honor explicit size, board-count, and palette instructions. Use only a
-   supplied brand/inventory palette when provided; never invent brand codes.
-   Read [palette-format.md](references/palette-format.md) when making or using
-   a palette file.
-7. Run the bundled compiler yourself on the clean subject as described in
-   **Internal execution**. Do not manually calculate, copy, or amend counts.
-8. Inspect the generated template and report. If
-   `report.json` has non-empty `board_decision.alternatives`, render the chosen
-   size and every close alternative with `--width` and `--height` into separate
-   output directories; ask the user to choose before declaring a final board
-   layout. Confirm all reported quantities from `pattern.json`/`colors.csv`.
-9. Report artifact paths and the verification state. Use “confirmed” only for
+6. Verify the actual logical grid mechanically. Requested image dimensions and
+   raster display dimensions are not grid evidence. Require declared logical
+   dimensions or unique nearest-neighbor recovery. Always fail on ambiguous grid recovery
+   instead of treating display pixels as beads.
+7. Choose a practical bead budget that preserves silhouette, eyes, facial
+   marks, and signature ornaments. Fix the logical pattern dimensions, then
+   derive the 29-cell board layout. Honor explicit user constraints, but do not
+   force the pattern onto standard-board multiples.
+8. Select the palette. Use only a supplied brand/inventory palette when
+   provided; never invent brand codes. Read
+   [palette-format.md](references/palette-format.md) when making or using a
+   palette file.
+9. Run the bundled compiler yourself on the verified grid as described in
+   **Internal execution**. Do not manually calculate, copy, or amend counts. For
+   `pixel-art` and `pattern-draft`, singleton cleanup is disabled by default.
+10. Open the generated template and compare it with the source and draft.
+    Recheck silhouette and every identity feature before delivery. If the
+    practical bead budget was missed or identity was flattened, revise the
+    draft/grid and compile again.
+11. Report artifact paths and the verification state. Use “confirmed” only for
    `verified`; label `inferred-low` as provisional reconstruction and
    `review-required` quantities as provisional pending user confirmation. Read
    [output-format.md](references/output-format.md) for the delivery checklist.
 
+## High-resolution route
+
+1. Design a plain bead-pattern draft with a practical bead budget.
+2. Preserve silhouette, eyes, facial marks, and signature ornaments.
+3. Never ask an image model to generate counts or the final legend. Do not ask
+   it for final UI, coordinates, or verification claims.
+4. Verify the actual logical grid mechanically.
+5. Compile it deterministically and compare before delivery.
+
 ## Internal execution
 
-From this skill directory, run:
+From this skill directory, compile an exact route with declared, verified
+dimensions. For a `pattern-draft` or `pixel-art` input:
 
 ```bash
 python scripts/create_pattern.py \
-  --input <clean-subject.png> \
+  --input <logical-grid.png> \
   --output-dir <output-directory> \
+  --width <logical-columns> \
+  --height <logical-rows> \
   --verification <verified|inferred-low|review-required> \
-  --classification <finished-bead-photo|pixel-art|high-resolution-image>
+  --classification <pattern-draft|pixel-art>
 ```
 
-Pass `--removed-interference <description>`, `--palette <palette.json-or-csv>`,
-and `--inferred-cells <column,row>` as applicable. Keep a meaningful
-single-cell feature with `--protect-cells <column,row>` when cleanup could
-erase it.
+For a high-resolution original plus semantic draft, add
+`--classification high-resolution-image --draft-input <draft.png>`. For a
+clean rectified finished-bead grid, use
+`--classification finished-bead-photo --rectified-grid`. Add
+`--grid-box LEFT,TOP,RIGHT,BOTTOM` when the logical grid has display padding.
+
+Pass `--removed-interference`, `--palette`, and `--inferred-cells` as
+applicable. Do not pass `--cleanup` unless the user explicitly requests
+compatibility cleanup and its effect has been reviewed.
 
 ## Image capability / 图像能力
 
-Use any available image-inspection/editing capability only to make the clean,
-front-facing subject intermediate. In Codex, prefer built-in `imagegen` for
-semantic editing when needed. Do not ask an image tool to draw the final grid,
-legend, labels, or quantity table. Recheck identity, silhouette, key features,
-and every inferred region after editing.
+Image generation or editing may isolate/rectify a subject, restore a small
+occlusion, or create the semantic pattern draft. It may decide which visual
+details survive simplification. Never ask an image model to generate counts or
+the final legend; deterministic code owns coordinates, palette mapping,
+quantities, board layout, and final rendering.
 
 Without an image tool, proceed only when the subject, boundary, and cells are
 already clear enough to compile; otherwise state what cannot be determined and

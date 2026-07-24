@@ -30,6 +30,21 @@ The installation-only scenario is evaluated only by the separate installation ru
 | `examples/inputs/high-resolution-mascot.png` | Classification `high-resolution-image`; clean-subject handling; compiler artifacts | Preserve the red-panda librarian's identity/silhouette; state sampling uncertainty if semantic detail is simplified; report compiler-derived quantities. |
 | `examples/inputs/occluded-finished-beads.png` | Classification `finished-bead-photo`; hand/table excluded; inferred-cell evidence or stop | Do not count the hand/table; mark a small recoverable tentacle reconstruction `inferred-low`, or use `review-required`/stop if it cannot be safely recovered. |
 
+### Complex quality regression
+
+Retain the no-skill baseline as evidence:
+
+- `58 x 58`: 1788 beads; facial detail was flattened.
+- `87 x 87`: 3970 beads; still less similar than the 2875-bead reference.
+- `110 x 122`: 10044 beads; display pixels were over-sampled as beads.
+
+A passing run creates/restores a semantic pattern draft, verifies its actual
+logical grid, and compiles that grid without singleton cleanup. It preserves
+the named identity features within a practical bead-count band. Success is not
+an exact `68 x 60` grid, and board layout must not resize the chosen pattern.
+All counts and the final legend come from compiler artifacts, not the image
+model.
+
 ## Installation-only pass rubric
 
 | Public scenario | Required evidence | Pass condition |

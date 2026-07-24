@@ -77,6 +77,24 @@ def test_forward_eval_separates_installation_from_pattern_generation_rubrics():
     assert "## Installation-only pass rubric" in evaluation
 
 
+def test_skill_eval_retains_real_pattern_quality_failure_baseline():
+    scenarios = Path("tests/skill-evals/scenarios.md").read_text(encoding="utf-8")
+    evaluation = Path("tests/skill-evals/with-skill.md").read_text(encoding="utf-8")
+    evidence = f"{scenarios}\n{evaluation}"
+
+    assert "`58 x 58`: 1788 beads; facial detail was flattened." in evidence
+    assert (
+        "`87 x 87`: 3970 beads; still less similar than the 2875-bead reference."
+        in evidence
+    )
+    assert (
+        "`110 x 122`: 10044 beads; display pixels were over-sampled as beads."
+        in evidence
+    )
+    assert "not an exact `68 x 60` grid" in evidence
+    assert "practical bead-count band" in evidence
+
+
 def test_skill_owns_internal_execution_and_delivery():
     skill = Path(
         "plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/SKILL.md"
@@ -93,6 +111,45 @@ def test_skill_owns_internal_execution_and_delivery():
     assert "deliver its generated files" in skill
     assert "attached image" in metadata
     assert "$create-fuse-bead-patterns" not in metadata
+
+
+def test_skill_contract_is_pattern_first_and_source_routed():
+    skill_path = Path(
+        "plugins/fuse-bead-designer/skills/create-fuse-bead-patterns"
+    )
+    skill = (skill_path / "SKILL.md").read_text(encoding="utf-8")
+    routing = (skill_path / "references/input-routing.md").read_text(encoding="utf-8")
+    contract = f"{skill}\n{routing}"
+
+    assert "Fix pattern dimensions before deriving board layout." in contract
+    assert "semantic pattern draft" in contract
+    assert "image generation or editing" in contract
+    assert "Never ask an image model to generate counts or the final legend." in contract
+    assert "Verify the actual logical grid" in contract
+    assert "fail on ambiguous grid recovery" in contract
+    assert "display pixels as beads" in contract
+    assert "singleton cleanup is disabled by default" in contract
+    for source_class in (
+        "finished-bead-photo",
+        "pixel-art",
+        "high-resolution-image",
+        "pattern-draft",
+    ):
+        assert source_class in routing
+
+
+def test_skill_links_pattern_draft_contract_and_final_comparison():
+    skill_path = Path(
+        "plugins/fuse-bead-designer/skills/create-fuse-bead-patterns"
+    )
+    skill = (skill_path / "SKILL.md").read_text(encoding="utf-8")
+    output = (skill_path / "references/output-format.md").read_text(encoding="utf-8")
+    draft_contract = skill_path / "references/pattern-draft-contract.md"
+
+    assert draft_contract.is_file()
+    assert "[pattern-draft-contract.md](references/pattern-draft-contract.md)" in skill
+    assert "compare the compiled template with the source and pattern draft" in output
+    assert "board layout was derived after the logical grid was fixed" in output
 
 
 def test_documented_example_outputs_agree():
