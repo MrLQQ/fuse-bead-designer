@@ -69,6 +69,14 @@ def test_agents_installation_contract_is_agent_owned():
     assert "installing runtime dependencies" in contract
 
 
+def test_forward_eval_separates_installation_from_pattern_generation_rubrics():
+    evaluation = Path("tests/skill-evals/with-skill.md").read_text(encoding="utf-8")
+
+    assert "## Pattern-generation pass rubric" in evaluation
+    assert "The installation-only scenario is evaluated only by the separate installation rubric below." in evaluation
+    assert "## Installation-only pass rubric" in evaluation
+
+
 def test_skill_owns_internal_execution_and_delivery():
     skill = Path(
         "plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/SKILL.md"
