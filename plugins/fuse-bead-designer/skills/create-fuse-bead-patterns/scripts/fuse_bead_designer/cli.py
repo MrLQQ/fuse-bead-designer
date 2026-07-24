@@ -15,6 +15,7 @@ from .masking import derive_subject_mask
 from .models import CompileReport, Pattern, VerificationState
 from .palettes import load_palette
 from .quantize import sample_cells
+from .routing import policy_for
 
 
 GENERATED_ARTIFACTS = frozenset(
@@ -23,6 +24,7 @@ GENERATED_ARTIFACTS = frozenset(
 CLASSIFICATIONS = (
     "finished-bead-photo",
     "pixel-art",
+    "pattern-draft",
     "high-resolution-image",
     "unclassified",
 )
@@ -65,6 +67,12 @@ def build_parser() -> argparse.ArgumentParser:
         choices=CLASSIFICATIONS,
         default="unclassified",
     )
+    parser.add_argument("--rectified-grid", action="store_true")
+    parser.add_argument("--draft-input", metavar="PATH")
+    parser.add_argument("--grid-box", metavar="LEFT,TOP,RIGHT,BOTTOM")
+    parser.add_argument("--sampling", choices=("center", "median"))
+    parser.add_argument("--cleanup", action="store_true")
+    parser.add_argument("--legacy-resample", action="store_true")
     parser.add_argument(
         "--removed-interference",
         action="append",
@@ -91,6 +99,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         arguments = parser.parse_args(argv)
         _validate_paired_size(arguments, parser)
+        arguments.route_policy = policy_for(
+            arguments.classification,
+            rectified_grid=arguments.rectified_grid,
+            has_pattern_draft=arguments.draft_input is not None,
+            legacy_resample=arguments.legacy_resample,
+        )
+        arguments.sampling = arguments.sampling or arguments.route_policy.sampling
+        arguments.cleanup = arguments.cleanup or arguments.route_policy.cleanup
         output_dir = Path(arguments.output_dir)
         _validate_output_dir(output_dir, arguments.force)
 
@@ -98,6 +114,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         protected_cells = _parse_coordinates(arguments.protect_cells)
         palette = load_palette(arguments.palette)
         image = _open_image(Path(arguments.input))
+        arguments.grid_box = _parse_grid_box(arguments.grid_box, image.size)
         selection = select_board(
             image.width,
             image.height,
@@ -138,6 +155,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             settings={
                 "colors": arguments.colors,
                 "max_boards": arguments.max_boards,
+                "sampling": arguments.sampling,
+                "cleanup": arguments.cleanup,
                 "protected_cells": [list(cell) for cell in protected_cells],
             },
         )
@@ -208,6 +227,26 @@ def _parse_coordinate(value: str) -> tuple[int, int]:
     if column < 0 or row < 0:
         raise ValueError("coordinates must use non-negative column,row")
     return column, row
+
+
+def _parse_grid_box(
+    value: str | None, image_size: tuple[int, int]
+) -> tuple[int, int, int, int] | None:
+    if value is None:
+        return None
+    parts = value.split(",")
+    if len(parts) != 4:
+        raise ValueError("grid box must use left,top,right,bottom")
+    try:
+        left, top, right, bottom = (int(part) for part in parts)
+    except ValueError as error:
+        raise ValueError("grid box must use four integer coordinates") from error
+    image_width, image_height = image_size
+    if left < 0 or top < 0 or right > image_width or bottom > image_height:
+        raise ValueError("grid box must be within image bounds")
+    if right <= left or bottom <= top:
+        raise ValueError("grid box must have positive width and height")
+    return left, top, right, bottom
 
 
 def _validate_coordinates_in_bounds(

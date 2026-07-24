@@ -102,6 +102,149 @@ def test_cli_requires_width_and_height_together(tmp_path, clean_subject_path, op
     assert "Traceback" not in result.stderr
 
 
+def test_cli_rejects_high_resolution_image_without_a_pattern_draft(
+    tmp_path, clean_subject_path
+):
+    result = run_cli(
+        clean_subject_path,
+        tmp_path / "out",
+        "--classification",
+        "high-resolution-image",
+    )
+
+    assert result.returncode == 2
+    assert "high-resolution-image requires has_pattern_draft=True" in result.stderr
+
+
+def test_cli_accepts_high_resolution_image_with_a_pattern_draft(tmp_path, clean_subject_path):
+    result = run_cli(
+        clean_subject_path,
+        tmp_path / "out",
+        "--classification",
+        "high-resolution-image",
+        "--draft-input",
+        str(clean_subject_path),
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+def test_cli_accepts_pattern_draft_without_declared_dimensions(tmp_path, clean_subject_path):
+    result = run_cli(
+        clean_subject_path,
+        tmp_path / "out",
+        "--classification",
+        "pattern-draft",
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+def test_cli_rejects_nonpositive_grid_box(tmp_path, clean_subject_path):
+    result = run_cli(
+        clean_subject_path,
+        tmp_path / "out",
+        "--grid-box",
+        "0,0,0,29",
+    )
+
+    assert result.returncode == 2
+    assert "grid box must have positive width and height" in result.stderr
+
+
+def test_cli_rejects_grid_box_outside_the_input_image(tmp_path, clean_subject_path):
+    result = run_cli(
+        clean_subject_path,
+        tmp_path / "out",
+        "--grid-box",
+        "0,0,59,29",
+    )
+
+    assert result.returncode == 2
+    assert "grid box must be within image bounds" in result.stderr
+
+
+def test_cli_records_explicit_sampling_override(tmp_path, clean_subject_path):
+    output = tmp_path / "out"
+    result = run_cli(
+        clean_subject_path,
+        output,
+        "--width",
+        "29",
+        "--height",
+        "29",
+        "--classification",
+        "pixel-art",
+        "--sampling",
+        "median",
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert read_pattern(output)["settings"]["sampling"] == "median"
+
+
+def test_cli_records_explicit_cleanup_override(tmp_path, clean_subject_path):
+    output = tmp_path / "out"
+    result = run_cli(
+        clean_subject_path,
+        output,
+        "--width",
+        "29",
+        "--height",
+        "29",
+        "--classification",
+        "pixel-art",
+        "--cleanup",
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert read_pattern(output)["settings"]["cleanup"] is True
+
+
+def test_cli_legacy_resample_selects_compatibility_policy(tmp_path, clean_subject_path):
+    output = tmp_path / "out"
+    result = run_cli(
+        clean_subject_path,
+        output,
+        "--width",
+        "29",
+        "--height",
+        "29",
+        "--classification",
+        "pixel-art",
+        "--legacy-resample",
+    )
+
+    assert result.returncode == 0, result.stderr
+    settings = read_pattern(output)["settings"]
+    assert settings["sampling"] == "median"
+    assert settings["cleanup"] is True
+
+
+def test_cli_rejects_unrectified_finished_bead_photo(tmp_path, clean_subject_path):
+    result = run_cli(
+        clean_subject_path,
+        tmp_path / "out",
+        "--classification",
+        "finished-bead-photo",
+    )
+
+    assert result.returncode == 2
+    assert "finished-bead-photo requires rectified_grid=True" in result.stderr
+
+
+def test_cli_accepts_rectified_finished_bead_photo(tmp_path, clean_subject_path):
+    result = run_cli(
+        clean_subject_path,
+        tmp_path / "out",
+        "--classification",
+        "finished-bead-photo",
+        "--rectified-grid",
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
 @pytest.mark.parametrize("colors", ["7", "17", "not-a-number"])
 def test_cli_rejects_invalid_color_limits(tmp_path, clean_subject_path, colors):
     result = run_cli(clean_subject_path, tmp_path / "out", "--colors", colors)
