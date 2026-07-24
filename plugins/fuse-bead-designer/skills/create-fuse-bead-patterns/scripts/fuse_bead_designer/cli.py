@@ -8,13 +8,14 @@ from typing import Sequence
 
 from PIL import Image
 
-from .boards import BoardSelection, select_board
-from .cleanup import cleanup_cells
+from .boards import STANDARD_CANDIDATES, BoardSelection, layout_boards, select_board
+from .cleanup import CleanupResult, cleanup_cells
 from .io import write_artifacts
+from .logical_grid import AmbiguousGridError, recover_nearest_neighbor_grid
 from .masking import derive_subject_mask
 from .models import CompileReport, Pattern, VerificationState
 from .palettes import load_palette
-from .quantize import sample_cells
+from .quantize import sample_cell_centers, sample_cells
 from .routing import policy_for
 
 
@@ -113,31 +114,97 @@ def main(argv: Sequence[str] | None = None) -> int:
         inferred_cells = _parse_coordinates(arguments.inferred_cells)
         protected_cells = _parse_coordinates(arguments.protect_cells)
         palette = load_palette(arguments.palette)
-        image = _open_image(Path(arguments.input))
-        arguments.grid_box = _parse_grid_box(arguments.grid_box, image.size)
-        selection = select_board(
-            image.width,
-            image.height,
-            explicit_size=(arguments.width, arguments.height)
-            if arguments.width is not None
-            else None,
-            max_boards=arguments.max_boards,
+        exact_route = (
+            arguments.classification != "unclassified"
+            and not arguments.legacy_resample
         )
+        source_path = Path(arguments.input)
+        draft_path = Path(arguments.draft_input) if arguments.draft_input else None
+        draft_used = (
+            exact_route
+            and arguments.classification == "high-resolution-image"
+            and draft_path is not None
+        )
+        compiled_path = draft_path if draft_used else source_path
+        assert compiled_path is not None
+        image = _open_image(compiled_path)
+        arguments.grid_box = _parse_grid_box(arguments.grid_box, image.size)
+        grid_box = arguments.grid_box
+        grid_evidence: dict[str, object]
+        if exact_route:
+            if arguments.width is not None:
+                selection = _exact_selection(arguments.width, arguments.height)
+                grid_evidence = {
+                    "source": "declared",
+                    "confidence": 1.0,
+                    "width": selection.width,
+                    "height": selection.height,
+                    "box": list(grid_box or (0, 0, image.width, image.height)),
+                }
+            else:
+                recovery_image = image.crop(grid_box) if grid_box is not None else image
+                try:
+                    recovered = recover_nearest_neighbor_grid(recovery_image)
+                except AmbiguousGridError as error:
+                    raise ValueError(
+                        "logical grid is ambiguous; provide --width and --height"
+                    ) from error
+                selection = _exact_selection(recovered.width, recovered.height)
+                if grid_box is None:
+                    grid_box = recovered.box
+                grid_evidence = {
+                    "source": recovered.source,
+                    "confidence": recovered.confidence,
+                    "width": recovered.width,
+                    "height": recovered.height,
+                    "box": list(grid_box),
+                }
+        else:
+            selection = select_board(
+                image.width,
+                image.height,
+                explicit_size=(arguments.width, arguments.height)
+                if arguments.width is not None
+                else None,
+                max_boards=arguments.max_boards,
+            )
+            grid_evidence = {
+                "source": "legacy-board-selection",
+                "confidence": None,
+                "width": selection.width,
+                "height": selection.height,
+                "box": None,
+            }
         _validate_coordinates_in_bounds(inferred_cells, selection)
         _validate_coordinates_in_bounds(protected_cells, selection)
         if selection.requires_confirmation and not arguments.confirm_large_board:
             raise ValueError("more than four boards requires --confirm-large-board")
 
         mask = derive_subject_mask(image)
-        sampled_cells = sample_cells(
-            image,
-            mask,
-            selection.width,
-            selection.height,
-            palette,
-            color_limit=arguments.colors,
+        if exact_route and arguments.sampling == "center":
+            sampled_cells = sample_cell_centers(
+                image,
+                mask,
+                selection.width,
+                selection.height,
+                palette,
+                color_limit=arguments.colors,
+                grid_box=grid_box,
+            )
+        else:
+            sampled_cells = sample_cells(
+                image,
+                mask,
+                selection.width,
+                selection.height,
+                palette,
+                color_limit=arguments.colors,
+            )
+        cleanup = (
+            cleanup_cells(sampled_cells, protected_cells=frozenset(protected_cells))
+            if arguments.cleanup
+            else CleanupResult(sampled_cells, [])
         )
-        cleanup = cleanup_cells(sampled_cells, protected_cells=frozenset(protected_cells))
         pattern = Pattern(
             width=selection.width,
             height=selection.height,
@@ -155,8 +222,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             settings={
                 "colors": arguments.colors,
                 "max_boards": arguments.max_boards,
+                "source_classification": arguments.classification,
                 "sampling": arguments.sampling,
                 "cleanup": arguments.cleanup,
+                "grid_box": list(grid_box) if grid_box is not None else None,
+                "draft_used": draft_used,
+                "grid_evidence": grid_evidence,
+                "source_input": str(source_path),
+                "draft_input": str(draft_path) if draft_path is not None else None,
+                "compiled_input": str(compiled_path),
                 "protected_cells": [list(cell) for cell in protected_cells],
             },
         )
@@ -173,6 +247,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             warnings=_warnings(selection, pattern.verification),
             verification=pattern.verification,
             inferred_cells=inferred_cells,
+            source_classification=arguments.classification,
+            sampling=arguments.sampling,
+            cleanup=arguments.cleanup,
+            grid_box=grid_box,
+            draft_used=draft_used,
+            grid_evidence=grid_evidence,
+            source_input=str(source_path),
+            draft_input=str(draft_path) if draft_path is not None else None,
+            compiled_input=str(compiled_path),
         )
         write_artifacts(pattern, output_dir, report=report)
     except (OSError, ValueError) as error:
@@ -188,6 +271,20 @@ def _positive_integer(value: str) -> int:
     if result <= 0:
         raise argparse.ArgumentTypeError("must be a positive integer")
     return result
+
+
+def _exact_selection(width: int, height: int) -> BoardSelection:
+    layout = layout_boards(width, height)
+    return BoardSelection(
+        width=layout.pattern_width,
+        height=layout.pattern_height,
+        board_columns=layout.board_columns,
+        board_rows=layout.board_rows,
+        is_custom=(width, height) not in STANDARD_CANDIDATES,
+        requires_confirmation=layout.board_columns * layout.board_rows > 4,
+        score=0.0,
+        alternatives=(),
+    )
 
 
 def _color_limit(value: str) -> int:

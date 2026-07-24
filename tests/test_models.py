@@ -4,7 +4,12 @@ from pathlib import Path
 import pytest
 from jsonschema import Draft202012Validator
 
-from fuse_bead_designer.models import PaletteColor, Pattern, VerificationState
+from fuse_bead_designer.models import (
+    CompileReport,
+    PaletteColor,
+    Pattern,
+    VerificationState,
+)
 
 
 def valid_pattern(**changes):
@@ -287,3 +292,40 @@ def test_pattern_schema_defines_required_canonical_fields():
         "string",
         "null",
     ]
+
+
+def test_compile_report_serializes_exact_route_provenance_without_renaming_legacy_keys():
+    report = CompileReport(
+        classification="pixel-art",
+        removed_interference=[],
+        board_decision={"columns": 3, "rows": 3},
+        palette_decision={"source": "generic"},
+        cleanup_changes=[],
+        warnings=[],
+        verification=VerificationState.VERIFIED,
+        source_classification="pixel-art",
+        sampling="center",
+        cleanup=False,
+        grid_box=(4, 8, 276, 248),
+        draft_used=False,
+        grid_evidence={
+            "source": "declared",
+            "confidence": 1.0,
+            "width": 68,
+            "height": 60,
+        },
+        source_input="source.png",
+        compiled_input="source.png",
+    )
+
+    data = report.to_dict()
+
+    assert data["classification"] == "pixel-art"
+    assert data["board_decision"] == {"columns": 3, "rows": 3}
+    assert data["source_classification"] == "pixel-art"
+    assert data["sampling"] == "center"
+    assert data["cleanup"] is False
+    assert data["grid_box"] == [4, 8, 276, 248]
+    assert data["draft_used"] is False
+    assert data["grid_evidence"]["source"] == "declared"
+    assert data["source_input"] == data["compiled_input"] == "source.png"

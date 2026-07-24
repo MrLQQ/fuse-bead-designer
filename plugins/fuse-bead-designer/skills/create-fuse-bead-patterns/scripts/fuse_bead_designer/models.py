@@ -154,9 +154,18 @@ class CompileReport:
     warnings: list[str]
     verification: VerificationState
     inferred_cells: list[tuple[int, int]] = field(default_factory=list)
+    source_classification: str | None = None
+    sampling: str | None = None
+    cleanup: bool | None = None
+    grid_box: tuple[int, int, int, int] | None = None
+    draft_used: bool | None = None
+    grid_evidence: dict[str, object] | None = None
+    source_input: str | None = None
+    draft_input: str | None = None
+    compiled_input: str | None = None
 
     def to_dict(self) -> dict[str, object]:
-        return {
+        data: dict[str, object] = {
             "classification": self.classification,
             "removed_interference": self.removed_interference,
             "board_decision": self.board_decision,
@@ -166,3 +175,18 @@ class CompileReport:
             "warnings": self.warnings,
             "verification": self.verification.value,
         }
+        if self.source_classification is not None:
+            data.update(
+                {
+                    "source_classification": self.source_classification,
+                    "sampling": self.sampling,
+                    "cleanup": self.cleanup,
+                    "grid_box": list(self.grid_box) if self.grid_box is not None else None,
+                    "draft_used": self.draft_used,
+                    "grid_evidence": self.grid_evidence,
+                    "source_input": self.source_input,
+                    "draft_input": self.draft_input,
+                    "compiled_input": self.compiled_input,
+                }
+            )
+        return data

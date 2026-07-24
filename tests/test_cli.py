@@ -23,9 +23,9 @@ CLI = (
 @pytest.fixture
 def clean_subject_path(tmp_path):
     path = tmp_path / "subject.png"
-    image = Image.new("RGBA", (58, 29), (0, 0, 0, 0))
-    for column in range(8, 50):
-        for row in range(5, 24):
+    image = Image.new("RGBA", (232, 116), (0, 0, 0, 0))
+    for column in range(32, 200):
+        for row in range(20, 96):
             image.putpixel((column, row), (229, 57, 53, 255))
     image.save(path)
     return path
@@ -124,12 +124,48 @@ def test_cli_accepts_high_resolution_image_with_a_pattern_draft(tmp_path, clean_
         "high-resolution-image",
         "--draft-input",
         str(clean_subject_path),
+        "--width",
+        "29",
+        "--height",
+        "29",
     )
 
     assert result.returncode == 0, result.stderr
 
 
-def test_cli_accepts_pattern_draft_without_declared_dimensions(tmp_path, clean_subject_path):
+def test_cli_compiles_high_resolution_draft_and_records_original_provenance(tmp_path):
+    source = tmp_path / "source.png"
+    draft = tmp_path / "draft.png"
+    Image.new("RGBA", (4, 4), (229, 57, 53, 255)).save(source)
+    Image.new("RGBA", (4, 4), (17, 21, 21, 255)).save(draft)
+    output = tmp_path / "out"
+
+    result = run_cli(
+        source,
+        output,
+        "--classification",
+        "high-resolution-image",
+        "--draft-input",
+        str(draft),
+        "--width",
+        "1",
+        "--height",
+        "1",
+    )
+
+    assert result.returncode == 0, result.stderr
+    pattern = read_pattern(output)
+    assert pattern["cells"] == [["black"]]
+    assert pattern["settings"]["draft_used"] is True
+    report = json.loads((output / "report.json").read_text(encoding="utf-8"))
+    assert report["source_input"] == str(source)
+    assert report["draft_input"] == str(draft)
+    assert report["compiled_input"] == str(draft)
+
+
+def test_cli_requests_dimensions_for_ambiguous_pattern_draft(
+    tmp_path, clean_subject_path
+):
     result = run_cli(
         clean_subject_path,
         tmp_path / "out",
@@ -137,7 +173,9 @@ def test_cli_accepts_pattern_draft_without_declared_dimensions(tmp_path, clean_s
         "pattern-draft",
     )
 
-    assert result.returncode == 0, result.stderr
+    assert result.returncode == 2
+    assert "provide --width and --height" in result.stderr
+    assert "Traceback" not in result.stderr
 
 
 def test_cli_rejects_nonpositive_grid_box(tmp_path, clean_subject_path):
@@ -157,7 +195,7 @@ def test_cli_rejects_grid_box_outside_the_input_image(tmp_path, clean_subject_pa
         clean_subject_path,
         tmp_path / "out",
         "--grid-box",
-        "0,0,59,29",
+        "0,0,233,116",
     )
 
     assert result.returncode == 2
@@ -201,6 +239,94 @@ def test_cli_records_explicit_cleanup_override(tmp_path, clean_subject_path):
     assert read_pattern(output)["settings"]["cleanup"] is True
 
 
+def test_cli_preserves_explicit_exact_grid_dimensions_and_occupied_cells(tmp_path):
+    source = tmp_path / "exact-grid.png"
+    image = Image.new("RGBA", (68 * 4, 60 * 4), (0, 0, 0, 0))
+    for column, row in ((0, 0), (34, 29), (67, 59)):
+        image.putpixel((column * 4 + 1, row * 4 + 1), (229, 57, 53, 255))
+    image.save(source)
+    output = tmp_path / "out"
+
+    result = run_cli(
+        source,
+        output,
+        "--classification",
+        "pixel-art",
+        "--width",
+        "68",
+        "--height",
+        "60",
+        "--confirm-large-board",
+    )
+
+    assert result.returncode == 0, result.stderr
+    pattern = read_pattern(output)
+    assert (pattern["width"], pattern["height"]) == (68, 60)
+    assert pattern["board_layout"] == {
+        "columns": 3,
+        "rows": 3,
+        "is_custom_size": True,
+    }
+    assert pattern["total_beads"] == 3
+    assert pattern["settings"] == {
+        "colors": 16,
+        "max_boards": 4,
+        "source_classification": "pixel-art",
+        "sampling": "center",
+        "cleanup": False,
+        "grid_box": None,
+        "draft_used": False,
+        "grid_evidence": {
+            "source": "declared",
+            "confidence": 1.0,
+            "width": 68,
+            "height": 60,
+            "box": [0, 0, 272, 240],
+        },
+        "source_input": str(source),
+        "draft_input": None,
+        "compiled_input": str(source),
+        "protected_cells": [],
+    }
+    report = json.loads((output / "report.json").read_text(encoding="utf-8"))
+    assert report["classification"] == "pixel-art"
+    assert report["source_classification"] == "pixel-art"
+    assert report["sampling"] == "center"
+    assert report["cleanup"] is False
+    assert report["grid_box"] is None
+    assert report["draft_used"] is False
+    assert report["grid_evidence"] == pattern["settings"]["grid_evidence"]
+
+
+def test_cli_recovers_unambiguous_exact_grid_dimensions(tmp_path):
+    logical = Image.new("RGBA", (16, 16))
+    logical.putdata(
+        [
+            (17, 21, 21, 255) if (column + row) % 2 == 0 else (229, 57, 53, 255)
+            for row in range(16)
+            for column in range(16)
+        ]
+    )
+    source = tmp_path / "scaled-grid.png"
+    logical.resize((80, 80), Image.Resampling.NEAREST).save(source)
+    output = tmp_path / "out"
+
+    result = run_cli(source, output, "--classification", "pixel-art")
+
+    assert result.returncode == 0, result.stderr
+    pattern = read_pattern(output)
+    assert (pattern["width"], pattern["height"]) == (16, 16)
+    assert pattern["total_beads"] == 16 * 16
+    assert pattern["settings"]["grid_box"] == [0, 0, 80, 80]
+    assert pattern["settings"]["grid_evidence"] == {
+        "source": "nearest-neighbor",
+        "confidence": 1.0,
+        "width": 16,
+        "height": 16,
+        "box": [0, 0, 80, 80],
+    }
+
+
 def test_cli_legacy_resample_selects_compatibility_policy(tmp_path, clean_subject_path):
     output = tmp_path / "out"
     result = run_cli(
@@ -219,6 +345,35 @@ def test_cli_legacy_resample_selects_compatibility_policy(tmp_path, clean_subjec
     settings = read_pattern(output)["settings"]
     assert settings["sampling"] == "median"
     assert settings["cleanup"] is True
+
+
+def test_cli_legacy_resample_uses_original_instead_of_high_resolution_draft(tmp_path):
+    source = tmp_path / "source.png"
+    draft = tmp_path / "draft.png"
+    Image.new("RGBA", (4, 4), (229, 57, 53, 255)).save(source)
+    Image.new("RGBA", (4, 4), (17, 21, 21, 255)).save(draft)
+    output = tmp_path / "out"
+
+    result = run_cli(
+        source,
+        output,
+        "--classification",
+        "high-resolution-image",
+        "--draft-input",
+        str(draft),
+        "--width",
+        "1",
+        "--height",
+        "1",
+        "--legacy-resample",
+    )
+
+    assert result.returncode == 0, result.stderr
+    pattern = read_pattern(output)
+    assert pattern["cells"] == [["red"]]
+    assert pattern["settings"]["draft_used"] is False
+    assert pattern["settings"]["sampling"] == "median"
+    assert pattern["settings"]["cleanup"] is True
 
 
 def test_cli_rejects_unrectified_finished_bead_photo(tmp_path, clean_subject_path):
@@ -240,6 +395,10 @@ def test_cli_accepts_rectified_finished_bead_photo(tmp_path, clean_subject_path)
         "--classification",
         "finished-bead-photo",
         "--rectified-grid",
+        "--width",
+        "29",
+        "--height",
+        "29",
     )
 
     assert result.returncode == 0, result.stderr
