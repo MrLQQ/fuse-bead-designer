@@ -1,4 +1,4 @@
 interface:
-  display_name: "Fuse Bead Patterns"
-  short_description: "Create count-accurate fuse-bead templates"
-  default_prompt: "Use $create-fuse-bead-patterns to turn this image into a count-accurate fuse-bead template."
+  display_name: "Verified Fuse Bead Patterns"
+  short_description: "Convert images into compiler-verified bead patterns"
+  default_prompt: "Use $create-fuse-bead-patterns to convert this image into a verified, buildable bead pattern."
