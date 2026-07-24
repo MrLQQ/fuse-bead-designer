@@ -2,7 +2,7 @@
 
 # Fuse Bead Designer
 
-Send a finished-bead photo, object photo, or high-resolution illustration to an Agent and receive a buildable grid, per-color quantities, and a reviewable report. The Agent identifies and cleans the subject; a deterministic compiler derives the grid and counts from the same `pattern.json` instead of guessing from a rendered image.
+Send a finished-bead photo, pixel art, object photo, or high-resolution illustration to an Agent and receive a buildable grid, per-color quantities, and a reviewable report. The Agent understands and prepares the visual content; the deterministic compiler accepts only a confirmed logical pattern and derives the grid and counts from the same `pattern.json` instead of guessing from a rendered image.
 
 ![Modern fuse-bead template](plugins/fuse-bead-designer/assets/screenshot-template.png)
 
@@ -19,6 +19,24 @@ Attach the source image in an image-capable Agent conversation, then send:
 > Turn the attached image into a fuse-bead pattern
 
 You can add natural constraints such as “prefer standard 29 × 29 boards,” “preserve white beads,” or “do not guess behind this occlusion; mark it for my review.” The normal flow does not expose a Skill token or require local commands.
+
+## The v0.3 pattern-first flow
+
+v0.3 deliberately separates understanding an image from producing a countable pattern. First establish a logical pattern with verified dimensions; then the deterministic compiler maps colors, calculates counts, derives the board layout, and renders the deliverables. The three input routes are:
+
+1. **Finished-bead photo**: exclude fingers, tables, glare, and other interference, correct perspective, and produce a front-facing grid with declared dimensions. Only a rectified regular grid may enter the compiler.
+2. **Pixel art or an existing pattern**: verify its logical width and height, then compile it directly. Automatic grid recovery is allowed only when a unique nearest-neighbor scale is provable; ambiguous interpretations stop for confirmation.
+3. **Ordinary photo or high-resolution illustration**: first use image understanding or editing to create a plain, grid-aligned **semantic pattern draft**, then verify its dimensions and compile it. The draft expresses the buildable shapes and color regions; it does not contain quantities or the final legend.
+
+An ordinary photo has no pre-existing bead grid. This project does not automatically detect a general bead lattice in ordinary photos or treat display pixels as beads; those sources require a semantic design decision first. A finished-bead photo must likewise be perspective-corrected and assigned an explicit grid instead of guessing final cells from a tilted, occluded, or reflective image.
+
+## Pattern dimensions, boards, and counts
+
+**Fix the pattern dimensions before deriving the board layout.** The compiler accepts an arbitrary positive integer width and height. A 29 × 29 board is a standard physical module, not a constraint on the logical pattern. Once the dimensions are fixed, the compiler calculates the necessary full or partial boards, so sizes such as 37 × 22 or 68 × 60 remain representable without padding the design.
+
+`pattern.json` is the canonical source. The template, per-color list, and total all use deterministic counts from the same logical grid: a fixed draft, width, height, and palette produce the same result. “Exact” means exact for that current pattern; it does not turn source ambiguity into fact.
+
+Occluded content is recorded as **inferred regions** only when the reconstruction is limited, explainable, and reproducible, with state `inferred-low`. Large, important, or multiply plausible gaps remain `review-required`. Counts in inferred regions are provisional and should not drive purchases before review.
 
 ## From source image to buildable pattern
 
@@ -73,19 +91,7 @@ Verification states are operational:
 - `inferred-low`: only limited, explainable reconstruction was used; inspect the markers.
 - `review-required`: a key region remains uncertain. Counts are provisional; inspect `review.png` and `report.json` before buying beads or building.
 
-“Exact counts” means deterministic totals for a fixed input, grid, and palette. It is not a claim that an ambiguous photo, unknown occlusion, or physical inventory is objectively correct.
-
-## Supported sources and automatic decisions
-
-The Skill handles general inputs, not only pre-pixelated art:
-
-- Finished-bead photos: distinguish the bead subject from fingers, tables, transparent boards, glare, and shadows.
-- Occluded photos or illustrations: reconstruct only explainable regions; unresolved key content stays review-required.
-- Actual object photos: isolate the subject from its photographic background while preserving subject details such as white areas.
-- High-resolution non-pixel images: simplify contours and continuous colors so one cell maps to one bead.
-- Clean pixel art: preserve proportions and hard edges where possible.
-
-The standard module is 29 × 29. The Agent chooses common combinations such as 29 × 29, 58 × 29, 29 × 58, or 58 × 58 from the subject proportions, or follows a natural-language request for a custom size. It asks before exceeding four boards. The default palette is generic and never invents brand codes; `brand_code` is retained only when you supply a brand palette.
+The default palette is generic and never invents brand codes; `brand_code` is retained only when you supply a brand palette.
 
 ## Codex and other Agent hosts
 
@@ -93,16 +99,16 @@ Codex installs the full Plugin where possible. Other [Agent Skills](https://agen
 
 For normal users, the boundary remains the same: send the installation prompt and an image request. The Agent obtains installation permission and performs supported installation itself. If the host lacks a required image capability, it should explain the limitation and ask for a better source instead of inventing subject detail or hidden regions.
 
-## Developer
+## Developer: advanced and debugging
 
 > The commands below are only for Agent implementers, maintainers, and developers debugging the compiler. Normal users should not run them; use the natural-language workflow above.
 
 ### Codex Marketplace / Plugin
 
-Install the fixed v0.2.0 release:
+Install the fixed v0.3.0 release:
 
 ```bash
-codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.2.0
+codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.3.0
 codex plugin add fuse-bead-designer@fuse-bead-designer
 ```
 
@@ -130,11 +136,11 @@ pytest -q
 python tools/package_release.py
 ```
 
-v0.2.0 packaging writes:
+v0.3.0 packaging writes:
 
 ```text
-dist/fuse-bead-designer-plugin-v0.2.0.zip
-dist/create-fuse-bead-patterns-skill-v0.2.0.zip
+dist/fuse-bead-designer-plugin-v0.3.0.zip
+dist/create-fuse-bead-patterns-skill-v0.3.0.zip
 ```
 
 ### Direct deterministic compiler use

@@ -17,13 +17,52 @@ def test_readmes_put_natural_language_before_developer_cli():
     chinese = Path("README.md").read_text(encoding="utf-8")
     english = Path("README.en.md").read_text(encoding="utf-8")
 
-    assert "请安装这个 Codex 插件：https://github.com/MrLQQ/fuse-bead-designer" in chinese
-    assert "把这张图生成拼豆设计图" in chinese
+    assert (
+        "请安装这个 Codex 插件：https://github.com/MrLQQ/fuse-bead-designer "
+        "。请由你完成安装；安装成功后停止，不要运行示例或安装额外运行依赖，"
+        "只提醒我新建任务。"
+    ) in chinese
+    assert "把这张图生成拼豆设计图。" in chinese
     assert chinese.index("## 开发者") < chinese.index("python ")
 
     assert "Please install this Codex plugin: https://github.com/MrLQQ/fuse-bead-designer" in english
     assert "Turn the attached image into a fuse-bead pattern" in english
     assert english.index("## Developer") < english.index("python ")
+
+
+def test_v03_readmes_define_the_pattern_first_contract():
+    chinese = Path("README.md").read_text(encoding="utf-8")
+    english = Path("README.en.md").read_text(encoding="utf-8")
+
+    for phrase in (
+        "三条输入路线",
+        "拼豆成品照",
+        "像素画或现成图纸",
+        "普通照片或高清插画",
+        "语义图案草稿",
+        "先确定图案尺寸，再推导拼板布局",
+        "任意正整数宽高",
+        "确定性统计",
+        "推断区域",
+        "校正后的规则网格",
+        "不会自动检测普通照片中的通用拼豆晶格",
+    ):
+        assert phrase in chinese
+
+    for phrase in (
+        "three input routes",
+        "finished-bead photo",
+        "pixel art or an existing pattern",
+        "ordinary photo or high-resolution illustration",
+        "semantic pattern draft",
+        "fix the pattern dimensions before deriving the board layout",
+        "arbitrary positive integer width and height",
+        "deterministic counts",
+        "inferred regions",
+        "rectified regular grid",
+        "does not automatically detect a general bead lattice in ordinary photos",
+    ):
+        assert phrase in english.lower()
 
 
 def test_marketplace_points_to_plugin():
@@ -44,10 +83,22 @@ def test_release_versions_are_synchronized():
     plugin = json.loads(
         Path("plugins/fuse-bead-designer/.codex-plugin/plugin.json").read_text(encoding="utf-8")
     )
+    marketplace = json.loads(
+        Path(".agents/plugins/marketplace.json").read_text(encoding="utf-8")
+    )
     pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
+    packager = Path("tools/package_release.py").read_text(encoding="utf-8")
+    chinese = Path("README.md").read_text(encoding="utf-8")
+    english = Path("README.en.md").read_text(encoding="utf-8")
+    agents = Path("AGENTS.md").read_text(encoding="utf-8")
 
-    assert plugin["version"] == "0.2.0"
-    assert 'version = "0.2.0"' in pyproject
+    assert plugin["version"] == "0.3.0"
+    assert marketplace["version"] == "0.3.0"
+    assert 'version = "0.3.0"' in pyproject
+    assert 'VERSION = "0.3.0"' in packager
+    for text in (chinese, english, agents):
+        assert "v0.3.0" in text
+        assert "v0.2.0" not in text
 
 
 def test_agents_installation_contract_is_agent_owned():
@@ -57,7 +108,7 @@ def test_agents_installation_contract_is_agent_owned():
     assert "check whether the `fuse-bead-designer` Marketplace is already installed" in contract
     assert "Then separately check whether the `fuse-bead-designer` plugin is installed" in contract
     assert "If the Marketplace is not installed, run this command internally:" in contract
-    assert "codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.2.0" in contract
+    assert "codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.3.0" in contract
     assert "If the plugin is not installed, run this command internally:" in contract
     assert "codex plugin add fuse-bead-designer@fuse-bead-designer" in contract
     assert "Do not ask the user to run" in contract
@@ -219,8 +270,3 @@ def test_verified_object_cutout_preserves_source_pixels_and_white_details():
     report = json.loads((output / "report.json").read_text(encoding="utf-8"))
     assert pattern["color_counts"]["warm-white"] > 0
     assert report["verification"] == "verified"
-
-
-def test_packager_uses_release_version():
-    packager = Path("tools/package_release.py").read_text(encoding="utf-8")
-    assert 'VERSION = "0.2.0"' in packager

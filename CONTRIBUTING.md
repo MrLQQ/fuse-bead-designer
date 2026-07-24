@@ -6,6 +6,8 @@ Thank you for improving Fuse Bead Designer.
 
 Keep the semantic image-understanding stage separate from deterministic compilation. Do not describe an inferred area, a brand color code, or a bead count as confirmed without the corresponding source artifact. `pattern.json` is the canonical output; `template.png`, `colors.csv`, and `report.json` must agree with it.
 
+Preserve the pattern-first contract in public documentation and code: route finished-bead photos, pixel art/existing patterns, and high-resolution sources explicitly; fix logical dimensions before deriving board layout; and keep inferred regions visibly provisional. Do not claim that the compiler detects a general bead lattice in ordinary photos.
+
 ## Development
 
 Use Python 3.10 or newer, then install and check the project:
@@ -16,7 +18,7 @@ pytest -q
 python tools/package_release.py
 ```
 
-The repository contract test covers the marketplace path and public examples. The packaging script emits deterministic archives under `dist/`; do not commit those generated files.
+The repository contract test covers the marketplace path, synchronized release versions, public README wording, and public examples. For a release, keep `pyproject.toml`, plugin and marketplace manifests, packaging code, installation instructions, and archive names on the same version. The packaging script emits deterministic archives under `dist/`; do not commit those generated files.
 
 ## Tests and examples
 
