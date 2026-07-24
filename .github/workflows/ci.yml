@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-and-package:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install -e ".[test]"
+      - run: pytest -q
+      - run: python tools/package_release.py
+      - uses: actions/upload-artifact@v7
+        with:
+          name: fuse-bead-release-python-${{ matrix.python-version }}
+          path: |
+            dist/fuse-bead-designer-plugin-v0.1.0.zip
+            dist/create-fuse-bead-patterns-skill-v0.1.0.zip
