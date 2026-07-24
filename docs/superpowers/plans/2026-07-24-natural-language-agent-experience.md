@@ -17,6 +17,7 @@
 - Chinese documentation is primary; English documentation is the fallback.
 - Release version is `0.2.0`.
 - README must show four real source-to-template examples: occluded finished beads, an occluded high-resolution image, an actual object photo, and a high-resolution non-pixel illustration.
+- Templates must label coordinates every five cells, list only used colors, and use a modern right-aligned quantity legend with a separated total.
 
 ---
 
@@ -321,7 +322,128 @@ git add examples tests/test_repository.py
 git commit -m "docs: add public source-to-template gallery"
 ```
 
-### Task 4: User-first README and developer-only CLI
+### Task 4: Modern template renderer
+
+**Files:**
+- Modify: `plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/fuse_bead_designer/render.py`
+- Modify: `tests/test_render.py`
+- Regenerate: `examples/outputs/*/template.png`
+- Regenerate when present: `examples/outputs/*/review.png`
+- Modify: `plugins/fuse-bead-designer/assets/screenshot-template.png`
+
+**Interfaces:**
+- Consumes: canonical `Pattern.cells`, `Pattern.color_counts()`, and existing `CompileReport` review markers.
+- Produces: a modern dual-column template image and review image without changing pattern cells or quantities.
+
+- [ ] **Step 1: Add failing renderer behavior tests**
+
+Add tests for:
+
+```python
+from fuse_bead_designer.render import (
+    LEGEND_WIDTH,
+    _color_metadata,
+    _coordinate_labels,
+    _used_palette_rows,
+)
+
+
+def test_coordinate_labels_show_only_five_cell_milestones():
+    assert _coordinate_labels(4) == []
+    assert _coordinate_labels(29) == [5, 10, 15, 20, 25, 29]
+    assert _coordinate_labels(58) == [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 58]
+
+
+def test_legend_contains_only_used_colors_and_right_side_has_room():
+    pattern = make_pattern()
+    pattern.palette.append(PaletteColor("blue", "Blue", "蓝色", "#2684FF"))
+    rows = _used_palette_rows(pattern)
+    assert [(color.id, count) for color, count in rows] == [("red", 3), ("white", 1)]
+    assert LEGEND_WIDTH >= 360
+
+
+def test_color_metadata_does_not_duplicate_hex_without_brand_code():
+    generic = PaletteColor("white", "Warm White", "暖白", "#F7F4EA")
+    branded = PaletteColor("red", "Red", "红色", "#FF0000", "R01")
+    assert _color_metadata(generic) == "#F7F4EA"
+    assert _color_metadata(branded) == "#FF0000 · R01"
+```
+
+- [ ] **Step 2: Run focused renderer tests and verify failure**
+
+Run:
+
+```bash
+.venv/bin/pytest tests/test_render.py -q
+```
+
+Expected: import failures for the new renderer helpers.
+
+- [ ] **Step 3: Implement the modern layout**
+
+In `render.py`:
+
+- add a top title `Fuse-bead template · {width} × {height}`;
+- move the grid down enough to preserve title whitespace;
+- make the right legend at least 360 pixels wide;
+- render coordinate labels at 5-cell milestones and at the final edge when it is not divisible by five;
+- render only palette colors whose count is greater than zero;
+- use a 38-pixel swatch, bold/color-name typography where supported, smaller metadata, and a right-aligned 20-pixel count;
+- use `_color_metadata()` so a missing brand code never duplicates the HEX value;
+- separate the total summary with a horizontal rule and keep board count secondary;
+- keep 5-cell and 29-cell grid boundaries;
+- keep `render_review()` as `render_template()` plus review markers.
+
+Do not alter `Pattern`, quantization, counts, or artifact schemas.
+
+- [ ] **Step 4: Run focused renderer tests**
+
+Run:
+
+```bash
+.venv/bin/pytest tests/test_render.py -q
+```
+
+Expected: all renderer tests pass.
+
+- [ ] **Step 5: Regenerate every public template once**
+
+Re-run the recorded deterministic compiler command for each public example with `--force`, preserving its existing input/intermediate, dimensions, palette, classification, removed-interference list, and verification state. Replace the Plugin screenshot with the regenerated high-resolution mascot template:
+
+```bash
+cp examples/outputs/high-resolution-mascot/template.png \
+  plugins/fuse-bead-designer/assets/screenshot-template.png
+```
+
+- [ ] **Step 6: Inspect representative outputs**
+
+Inspect at least:
+
+- `examples/outputs/actual-object-photo/template.png`;
+- `examples/outputs/occluded-high-resolution-image/template.png`;
+- `examples/outputs/occluded-finished-beads/template.png`.
+
+Confirm every-five-cell coordinates, no zero-count legend rows, large right-aligned quantities, separated total, correct subject, and no clipping.
+
+- [ ] **Step 7: Run full suite once and commit**
+
+Run:
+
+```bash
+.venv/bin/pytest -q
+git diff --check
+```
+
+Expected: all tests pass and no whitespace errors.
+
+```bash
+git add plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/fuse_bead_designer/render.py \
+  plugins/fuse-bead-designer/assets/screenshot-template.png \
+  examples/outputs tests/test_render.py
+git commit -m "feat: modernize template legend and layout"
+```
+
+### Task 5: User-first README and developer-only CLI
 
 **Files:**
 - Modify: `README.md`
@@ -329,7 +451,7 @@ git commit -m "docs: add public source-to-template gallery"
 - Modify: `tests/test_repository.py`
 
 **Interfaces:**
-- Consumes: the Agent installation contract and natural-language Skill behavior from Tasks 1–2.
+- Consumes: the Agent installation contract, natural-language Skill behavior, four-example gallery, and modern renderer from Tasks 1–4.
 - Produces: a Chinese-first onboarding path containing no user-run commands and a separate developer reference containing all CLI examples.
 
 - [ ] **Step 1: Add failing README information-architecture tests**
@@ -393,7 +515,7 @@ git add README.md README.en.md tests/test_repository.py
 git commit -m "docs: make agent prompts the primary workflow"
 ```
 
-### Task 5: v0.2.0 packaging and release readiness
+### Task 6: v0.2.0 packaging and release readiness
 
 **Files:**
 - Modify: `tools/package_release.py`
@@ -401,7 +523,7 @@ git commit -m "docs: make agent prompts the primary workflow"
 - Modify: `plugins/fuse-bead-designer/.codex-plugin/plugin.json` only if validation requires a manifest correction.
 
 **Interfaces:**
-- Consumes: the v0.2.0 Plugin, Skill, gallery, and documentation produced by Tasks 1–4.
+- Consumes: the v0.2.0 Plugin, Skill, gallery, renderer, and documentation produced by Tasks 1–5.
 - Produces: deterministic `v0.2.0` Plugin and standalone Skill archives plus a release-ready branch.
 
 - [ ] **Step 1: Add a failing package-version test**
