@@ -6,7 +6,7 @@ requires-python = ">=3.10"
 dependencies = ["Pillow>=10.0"]
 
 [project.optional-dependencies]
-test = ["pytest>=8.0"]
+test = ["pytest>=8.0", "jsonschema>=4.0"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

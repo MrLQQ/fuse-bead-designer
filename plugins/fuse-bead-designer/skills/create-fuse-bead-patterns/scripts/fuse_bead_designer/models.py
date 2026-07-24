@@ -33,19 +33,49 @@ class Pattern:
     settings: dict[str, object] = field(default_factory=dict)
 
     def validate(self) -> None:
+        if not _are_integers(self.width, self.height):
+            raise ValueError("grid dimensions must be integers")
         if self.width <= 0 or self.height <= 0:
             raise ValueError("grid dimensions must be positive")
+        if not _is_integer(self.module_size):
+            raise ValueError("module size must be an integer")
+        if self.module_size <= 0:
+            raise ValueError("module size must be positive")
+        if not _are_integers(self.board_columns, self.board_rows):
+            raise ValueError("board layout dimensions must be integers")
         if self.board_columns <= 0 or self.board_rows <= 0:
             raise ValueError("board layout dimensions must be positive")
+        if not isinstance(self.is_custom_size, bool):
+            raise ValueError("is_custom_size must be a boolean")
+        if not isinstance(self.verification, VerificationState):
+            raise ValueError("verification must be a VerificationState")
+        if not isinstance(self.settings, dict):
+            raise ValueError("settings must be an object")
         if not self.is_custom_size and (
             self.width != 29 * self.board_columns
             or self.height != 29 * self.board_rows
         ):
             raise ValueError("standard board layout dimensions do not match 29-module layout")
+        if not isinstance(self.cells, list):
+            raise ValueError("cells must be a list of rows")
+        if any(not isinstance(row, list) for row in self.cells):
+            raise ValueError("cell rows must be lists")
         if len(self.cells) != self.height:
             raise ValueError("cell row count does not match height")
         if any(len(row) != self.width for row in self.cells):
             raise ValueError("cell column count does not match width")
+        if any(
+            cell is not None and not isinstance(cell, str)
+            for row in self.cells
+            for cell in row
+        ):
+            raise ValueError("cell value must be a palette id string or None")
+        if not isinstance(self.palette, list):
+            raise ValueError("palette must be a list")
+        if any(not isinstance(color, PaletteColor) for color in self.palette):
+            raise ValueError("palette entries must be PaletteColor instances")
+        for color in self.palette:
+            _validate_palette_color(color)
         palette_ids = [color.id for color in self.palette]
         if len(palette_ids) != len(set(palette_ids)):
             raise ValueError("duplicate palette id")
@@ -54,7 +84,14 @@ class Pattern:
             for cell in row:
                 if cell is not None and cell not in known:
                     raise ValueError(f"unknown palette id: {cell}")
-        for column, row in self.inferred_cells:
+        if not isinstance(self.inferred_cells, list):
+            raise ValueError("inferred_cells must be a list")
+        for cell in self.inferred_cells:
+            if not isinstance(cell, (list, tuple)) or len(cell) != 2:
+                raise ValueError("inferred cell must be a coordinate pair")
+            column, row = cell
+            if not _are_integers(column, row):
+                raise ValueError("inferred cell coordinates must be integers")
             if not (0 <= column < self.width and 0 <= row < self.height):
                 raise ValueError("inferred cell is outside the grid")
 
@@ -68,6 +105,7 @@ class Pattern:
         return sum(self.color_counts().values())
 
     def to_dict(self) -> dict[str, object]:
+        self.validate()
         return {
             "schema_version": 1,
             "width": self.width,
@@ -86,6 +124,22 @@ class Pattern:
             "inferred_cells": [list(cell) for cell in self.inferred_cells],
             "settings": self.settings,
         }
+
+
+def _is_integer(value: object) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _are_integers(*values: object) -> bool:
+    return all(_is_integer(value) for value in values)
+
+
+def _validate_palette_color(color: PaletteColor) -> None:
+    for field_name in ("id", "name", "name_zh", "hex"):
+        if not isinstance(getattr(color, field_name), str):
+            raise ValueError(f"palette color {field_name} has an invalid type")
+    if color.brand_code is not None and not isinstance(color.brand_code, str):
+        raise ValueError("palette color brand_code has an invalid type")
 
 
 @dataclass

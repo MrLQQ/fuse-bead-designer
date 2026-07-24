@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import pytest
+from jsonschema import Draft202012Validator
 
 from fuse_bead_designer.models import PaletteColor, Pattern, VerificationState
 
@@ -141,6 +142,112 @@ def test_custom_size_pattern_does_not_require_standard_board_dimensions():
 
 def test_pattern_dict_has_schema_version_one():
     assert valid_pattern().to_dict()["schema_version"] == 1
+
+
+@pytest.mark.parametrize("module_size", [0, -1])
+def test_pattern_rejects_non_positive_module_size(module_size):
+    pattern = valid_pattern(module_size=module_size)
+
+    with pytest.raises(ValueError, match="module size must be positive"):
+        pattern.validate()
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("width", True, "grid dimensions must be integers"),
+        ("height", 29.0, "grid dimensions must be integers"),
+        ("module_size", "29", "module size must be an integer"),
+        ("board_columns", True, "board layout dimensions must be integers"),
+        ("board_rows", 1.0, "board layout dimensions must be integers"),
+        ("is_custom_size", 1, "is_custom_size must be a boolean"),
+        ("verification", "verified", "verification must be a VerificationState"),
+        ("settings", [], "settings must be an object"),
+    ],
+)
+def test_pattern_rejects_schema_incompatible_scalar_field_types(field, value, message):
+    pattern = valid_pattern(**{field: value})
+
+    with pytest.raises(ValueError, match=message):
+        pattern.validate()
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("id", 1),
+        ("name", 1),
+        ("name_zh", 1),
+        ("hex", 1),
+        ("brand_code", 1),
+    ],
+)
+def test_pattern_rejects_palette_color_with_schema_incompatible_field(field, value):
+    values = {
+        "id": "red",
+        "name": "Red",
+        "name_zh": "红色",
+        "hex": "#FF0000",
+        "brand_code": None,
+    }
+    values[field] = value
+    pattern = valid_pattern(palette=[PaletteColor(**values)])
+
+    with pytest.raises(ValueError, match=f"palette color {field} has an invalid type"):
+        pattern.validate()
+
+
+def test_pattern_rejects_non_palette_color_entry():
+    pattern = valid_pattern(palette=["red"])
+
+    with pytest.raises(ValueError, match="palette entries must be PaletteColor instances"):
+        pattern.validate()
+
+
+@pytest.mark.parametrize(
+    ("cells", "message"),
+    [
+        ("not rows", "cells must be a list of rows"),
+        ([[None] * 29 for _ in range(28)] + [tuple([None] * 29)], "cell rows must be lists"),
+        ([[None] * 28 + [1] for _ in range(29)], "cell value must be a palette id string or None"),
+    ],
+)
+def test_pattern_rejects_schema_incompatible_cells(cells, message):
+    pattern = valid_pattern(cells=cells)
+
+    with pytest.raises(ValueError, match=message):
+        pattern.validate()
+
+
+@pytest.mark.parametrize(
+    ("inferred_cells", "message"),
+    [
+        ("not coordinates", "inferred_cells must be a list"),
+        ([(0, 0, 0)], "inferred cell must be a coordinate pair"),
+        ([(True, 0)], "inferred cell coordinates must be integers"),
+        ([(0, "0")], "inferred cell coordinates must be integers"),
+    ],
+)
+def test_pattern_rejects_schema_incompatible_inferred_cells(inferred_cells, message):
+    pattern = valid_pattern(inferred_cells=inferred_cells)
+
+    with pytest.raises(ValueError, match=message):
+        pattern.validate()
+
+
+def test_valid_pattern_serialization_round_trips_against_json_schema():
+    schema_path = (
+        Path(__file__).resolve().parents[1]
+        / "plugins"
+        / "fuse-bead-designer"
+        / "skills"
+        / "create-fuse-bead-patterns"
+        / "assets"
+        / "pattern.schema.json"
+    )
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+
+    Draft202012Validator(schema).validate(valid_pattern().to_dict())
 
 
 def test_pattern_schema_defines_required_canonical_fields():
