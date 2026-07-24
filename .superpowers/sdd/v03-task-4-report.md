@@ -103,3 +103,38 @@ Full suite:
 - The fixture is synthetic and redistributable; visual inspection and
   coordinate assertions cover its identity features.
 - Task 5 scope remains untouched.
+
+## Reviewer fix: high-resolution provenance command
+
+The reviewer found that the generic `pattern-draft|pixel-art` command plus an
+instruction to “add” high-resolution flags could lead an Agent to pass the
+semantic draft as both `--input` and `--draft-input`, losing original-source
+provenance.
+
+RED:
+
+```text
+.venv/bin/python -m pytest \
+  tests/test_repository.py::test_skill_high_resolution_command_preserves_original_and_draft_provenance -q
+1 failed
+missing: <!-- high-resolution-command:start -->
+```
+
+GREEN:
+
+```text
+.venv/bin/python -m pytest tests/test_repository.py -q
+17 passed in 0.18s
+
+python3 /Users/bytedance/.codex/skills/.system/skill-creator/scripts/quick_validate.py \
+  plugins/fuse-bead-designer/skills/create-fuse-bead-patterns
+Skill is valid!
+```
+
+`SKILL.md` now states that the generic pattern-draft command is not the
+high-resolution command and gives a complete invocation with
+`--input <original-source.png>`,
+`--classification high-resolution-image`,
+`--draft-input <semantic-pattern-draft.png>`, verified logical dimensions, and
+an optional verified grid box. Counts and the final legend remain deterministic
+compiler outputs.

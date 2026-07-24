@@ -152,6 +152,26 @@ def test_skill_links_pattern_draft_contract_and_final_comparison():
     assert "board layout was derived after the logical grid was fixed" in output
 
 
+def test_skill_high_resolution_command_preserves_original_and_draft_provenance():
+    skill = Path(
+        "plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/SKILL.md"
+    ).read_text(encoding="utf-8")
+    assert "<!-- high-resolution-command:start -->" in skill
+    assert "<!-- high-resolution-command:end -->" in skill
+    high_resolution_command = skill.split(
+        "<!-- high-resolution-command:start -->", 1
+    )[1].split("<!-- high-resolution-command:end -->", 1)[0]
+
+    assert "--input <original-source.png>" in high_resolution_command
+    assert "--classification high-resolution-image" in high_resolution_command
+    assert "--draft-input <semantic-pattern-draft.png>" in high_resolution_command
+    assert "--width <verified-logical-columns>" in high_resolution_command
+    assert "--height <verified-logical-rows>" in high_resolution_command
+    assert "--grid-box <left,top,right,bottom>" in high_resolution_command
+    assert "Do not use the generic pattern-draft command" in high_resolution_command
+    assert "counts or the final legend" in high_resolution_command
+
+
 def test_documented_example_outputs_agree():
     for path in Path("examples/outputs").glob("*/pattern.json"):
         data = json.loads(path.read_text(encoding="utf-8"))

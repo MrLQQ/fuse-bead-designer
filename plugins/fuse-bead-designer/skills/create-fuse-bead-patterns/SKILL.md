@@ -90,9 +90,28 @@ python scripts/create_pattern.py \
   --classification <pattern-draft|pixel-art>
 ```
 
-For a high-resolution original plus semantic draft, add
-`--classification high-resolution-image --draft-input <draft.png>`. For a
-clean rectified finished-bead grid, use
+<!-- high-resolution-command:start -->
+Do not use the generic pattern-draft command above for a high-resolution
+source. It would lose the original/draft provenance boundary. Use the original
+as `--input` and the separate semantic draft as `--draft-input`:
+
+```bash
+python scripts/create_pattern.py \
+  --input <original-source.png> \
+  --output-dir <output-directory> \
+  --classification high-resolution-image \
+  --draft-input <semantic-pattern-draft.png> \
+  --width <verified-logical-columns> \
+  --height <verified-logical-rows> \
+  --grid-box <left,top,right,bottom> \
+  --verification <verified|inferred-low|review-required>
+```
+
+Omit `--grid-box` only when the verified logical grid fills the draft image.
+The compiler, not either image, produces counts or the final legend.
+<!-- high-resolution-command:end -->
+
+For a clean rectified finished-bead grid, use
 `--classification finished-bead-photo --rectified-grid`. Add
 `--grid-box LEFT,TOP,RIGHT,BOTTOM` when the logical grid has display padding.
 
