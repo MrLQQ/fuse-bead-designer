@@ -5,9 +5,13 @@ description: Use when turning finished bead photos, pixel art, illustrations, or
 
 # Create Fuse Bead Patterns
 
-Own the complete workflow. Do not ask the user to run commands or install
-runtime dependencies when the host can do so with the available permissions.
-Run the bundled compiler yourself and deliver its generated files.
+Own the complete workflow. Do not ask the user to run commands. Run the
+bundled compiler yourself and deliver its generated files.
+
+Host capability or permission is not installation approval.
+Request approval before installing a missing runtime dependency.
+After approval, install it internally; do not ask the user to copy or run the
+installation command.
 
 Create a clean semantic input first; compile its cells, counts, and artifacts
 with the bundled deterministic compiler. `pattern.json`, not an image model or

@@ -60,6 +60,10 @@ def test_skill_owns_internal_execution_and_delivery():
 
     assert "Do not ask the user to run commands" in skill
     assert "Run the bundled compiler yourself" in skill
+    assert "Host capability or permission is not installation approval." in skill
+    assert "Request approval before installing a missing runtime dependency." in skill
+    assert "After approval, install it internally" in skill
+    assert "deliver its generated files" in skill
     assert "attached image" in metadata
     assert "$create-fuse-bead-patterns" not in metadata
 
