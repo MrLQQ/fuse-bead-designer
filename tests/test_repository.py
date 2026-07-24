@@ -71,6 +71,25 @@ def test_v03_readmes_define_the_pattern_first_contract():
         assert phrase in english.lower()
 
 
+def test_readmes_document_runnable_finished_bead_route_and_conditional_review():
+    chinese = Path("README.md").read_text(encoding="utf-8")
+    english = Path("README.en.md").read_text(encoding="utf-8")
+
+    for readme in (chinese, english):
+        assert (
+            "--input "
+            "examples/intermediates/occluded-finished-beads-pattern-draft.png"
+        ) in readme
+        assert "--classification finished-bead-photo \\\n  --rectified-grid" in readme
+        assert "--width 58 --height 58" in readme
+        assert "occluded-finished-beads-clean.png" not in readme
+
+    assert "只有 `report.json` 记录了 `inferred_cells` 或 `cleanup_changes` 时" in chinese
+    assert "对照原始素材与语义图案草稿" in chinese
+    assert "only when `report.json` lists `inferred_cells` or `cleanup_changes`" in english
+    assert "compare the source with the semantic pattern draft" in english
+
+
 def test_marketplace_points_to_plugin():
     data = json.loads(Path(".agents/plugins/marketplace.json").read_text(encoding="utf-8"))
     entry = next(item for item in data["plugins"] if item["name"] == "fuse-bead-designer")

@@ -83,13 +83,13 @@ v0.3.0 把“理解图片”和“生成可计数图纸”明确分开：先得�
 - `colors.csv`：实际使用颜色、色值、可选品牌色号和精确数量。
 - `pattern.json`：唯一可信源，包含网格、调色板、板布局和逐色数量。
 - `report.json`：输入分类、清理记录、尺寸选择、警告和可信状态。
-- `review.png`：存在遮挡补全或清理标记时，用于集中复核不确定区域。
+- `review.png`：仅当存在已标记的推断格或清理变化坐标时生成，用于集中复核这些位置。
 
 可信状态不是装饰信息：
 
 - `verified`：主体没有受语义补全影响，数量可作为已确认设计的用量。
 - `inferred-low`：仅有少量、可解释补全，需要查看标记。
-- `review-required`：关键区域仍不确定，当前数量只是暂定值；请先检查 `review.png` 和 `report.json`，确认后再采购或开拼。
+- `review-required`：关键区域仍不确定，当前数量只是暂定值；请先检查 `report.json`，并对照原始素材与语义图案草稿。只有 `report.json` 记录了 `inferred_cells` 或 `cleanup_changes` 时才会生成 `review.png`，届时再检查其中的坐标标记；确认后再采购或开拼。
 
 默认使用通用调色板且不虚构品牌色号，只有你提供品牌色表时才保留 `brand_code`。
 
@@ -149,12 +149,13 @@ dist/create-fuse-bead-patterns-skill-v0.3.0.zip
 
 ```bash
 python plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/create_pattern.py \
-  --input examples/intermediates/occluded-finished-beads-clean.png \
+  --input examples/intermediates/occluded-finished-beads-pattern-draft.png \
   --output-dir work/occluded-pattern \
   --width 58 --height 58 \
   --palette examples/palettes/octopus-generic.json \
   --verification review-required \
   --classification finished-bead-photo \
+  --rectified-grid \
   --removed-interference hand fingers wooden-table transparent-pegboard pegs glare shadows background
 ```
 

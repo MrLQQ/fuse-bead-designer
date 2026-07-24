@@ -83,13 +83,13 @@ Each generation delivers:
 - `colors.csv`: colors actually used, hex values, optional supplied brand codes, and exact counts.
 - `pattern.json`: the canonical grid, palette, board layout, and per-color counts.
 - `report.json`: input classification, cleanup record, sizing decision, warnings, and verification state.
-- `review.png`: focused uncertainty markers when cleanup or inferred regions need review.
+- `review.png`: generated only when inferred-cell or cleanup-change coordinates exist, providing focused markers for those locations.
 
 Verification states are operational:
 
 - `verified`: no semantic reconstruction affected the subject; counts belong to the confirmed design.
 - `inferred-low`: only limited, explainable reconstruction was used; inspect the markers.
-- `review-required`: a key region remains uncertain. Counts are provisional; inspect `review.png` and `report.json` before buying beads or building.
+- `review-required`: a key region remains uncertain. Counts are provisional; inspect `report.json` and compare the source with the semantic pattern draft. Inspect `review.png` only when `report.json` lists `inferred_cells` or `cleanup_changes`; confirm the result before buying beads or building.
 
 The default palette is generic and never invents brand codes; `brand_code` is retained only when you supply a brand palette.
 
@@ -149,12 +149,13 @@ The Agent normally calls the compiler internally. Run it directly only for debug
 
 ```bash
 python plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/create_pattern.py \
-  --input examples/intermediates/occluded-finished-beads-clean.png \
+  --input examples/intermediates/occluded-finished-beads-pattern-draft.png \
   --output-dir work/occluded-pattern \
   --width 58 --height 58 \
   --palette examples/palettes/octopus-generic.json \
   --verification review-required \
   --classification finished-bead-photo \
+  --rectified-grid \
   --removed-interference hand fingers wooden-table transparent-pegboard pegs glare shadows background
 ```
 
