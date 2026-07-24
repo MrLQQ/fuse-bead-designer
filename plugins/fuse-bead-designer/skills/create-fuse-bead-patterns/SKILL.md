@@ -1,9 +1,13 @@
 ---
 name: create-fuse-bead-patterns
-description: Use when turning a finished fuse-bead photo, pixel art, illustration, or high-resolution image into a buildable fuse-bead pattern with compiler-verified quantities, board choices, palettes, and explicit uncertainty.
+description: Use when turning finished bead photos, pixel art, illustrations, or high-resolution images into 拼豆图纸, 拼豆模板, or 像素拼豆 with compiler-verified color counts, bead quantities, board choices, palettes, and explicit uncertainty.
 ---
 
 # Create Fuse Bead Patterns
+
+Own the complete workflow. Do not ask the user to run commands or install
+runtime dependencies when the host can do so with the available permissions.
+Run the bundled compiler yourself and deliver its generated files.
 
 Create a clean semantic input first; compile its cells, counts, and artifacts
 with the bundled deterministic compiler. `pattern.json`, not an image model or
@@ -34,21 +38,8 @@ Perform these steps in order:
    supplied brand/inventory palette when provided; never invent brand codes.
    Read [palette-format.md](references/palette-format.md) when making or using
    a palette file.
-7. Run the compiler on the clean subject. Use this portable command from this
-   skill directory:
-
-   ```bash
-   python scripts/create_pattern.py \
-     --input <clean-subject.png> \
-     --output-dir <output-directory> \
-     --verification <verified|inferred-low|review-required> \
-     --classification <finished-bead-photo|pixel-art|high-resolution-image>
-   ```
-
-   Pass `--removed-interference <description>`, `--palette <palette.json-or-csv>`,
-   and `--inferred-cells <column,row>` as applicable. Keep a meaningful
-   single-cell feature with `--protect-cells <column,row>` when cleanup could
-   erase it. Do not manually calculate, copy, or amend counts.
+7. Run the bundled compiler yourself on the clean subject as described in
+   **Internal execution**. Do not manually calculate, copy, or amend counts.
 8. Inspect the generated template and report. If
    `report.json` has non-empty `board_decision.alternatives`, render the chosen
    size and every close alternative with `--width` and `--height` into separate
@@ -58,6 +49,23 @@ Perform these steps in order:
    `verified`; label `inferred-low` as provisional reconstruction and
    `review-required` quantities as provisional pending user confirmation. Read
    [output-format.md](references/output-format.md) for the delivery checklist.
+
+## Internal execution
+
+From this skill directory, run:
+
+```bash
+python scripts/create_pattern.py \
+  --input <clean-subject.png> \
+  --output-dir <output-directory> \
+  --verification <verified|inferred-low|review-required> \
+  --classification <finished-bead-photo|pixel-art|high-resolution-image>
+```
+
+Pass `--removed-interference <description>`, `--palette <palette.json-or-csv>`,
+and `--inferred-cells <column,row>` as applicable. Keep a meaningful
+single-cell feature with `--protect-cells <column,row>` when cleanup could
+erase it.
 
 ## Image capability / 图像能力
 

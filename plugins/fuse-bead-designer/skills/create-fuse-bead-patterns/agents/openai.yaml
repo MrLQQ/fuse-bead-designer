@@ -1,4 +1,4 @@
 interface:
-  display_name: "Verified Fuse Bead Patterns"
-  short_description: "Convert images into compiler-verified bead patterns"
-  default_prompt: "Use $create-fuse-bead-patterns to convert this image into a verified, buildable bead pattern."
+  display_name: "Fuse Bead Designer"
+  short_description: "Turn an attached image into a buildable bead pattern"
+  default_prompt: "Turn the attached image into a buildable fuse-bead pattern and report each color quantity."

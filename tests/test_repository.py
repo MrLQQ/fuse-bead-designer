@@ -50,6 +50,20 @@ def test_agents_installation_contract_is_agent_owned():
     assert "On compatible non-Codex hosts, use the standalone Release Skill" in contract
 
 
+def test_skill_owns_internal_execution_and_delivery():
+    skill = Path(
+        "plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/SKILL.md"
+    ).read_text(encoding="utf-8")
+    metadata = Path(
+        "plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/agents/openai.yaml"
+    ).read_text(encoding="utf-8")
+
+    assert "Do not ask the user to run commands" in skill
+    assert "Run the bundled compiler yourself" in skill
+    assert "attached image" in metadata
+    assert "$create-fuse-bead-patterns" not in metadata
+
+
 def test_documented_example_outputs_agree():
     for path in Path("examples/outputs").glob("*/pattern.json"):
         data = json.loads(path.read_text(encoding="utf-8"))
