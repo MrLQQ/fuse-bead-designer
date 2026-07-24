@@ -1,0 +1,43 @@
+Provenance
+==========
+
+Generated and edited with the built-in OpenAI image-generation tool on
+2026-07-24. Both images are original project fixtures; no third-party or user
+imagery was used.
+
+Source: examples/inputs/occluded-high-resolution-image.png
+Clean intermediate: examples/intermediates/occluded-high-resolution-image-clean.png
+Final template: produced only by the bundled deterministic compiler
+
+Source-generation prompt
+========================
+
+Use case: illustration-story
+Asset type: openly distributable raw evaluation fixture for a craft-pattern conversion task
+Primary request: Create an original clean high-resolution non-pixel illustration of one small yellow songbird perched on a simple brown branch. Add one plain blank off-white rectangular paper label in the foreground that hides only a small, non-identity-defining outer portion of the bird's tail; the label must not cover the head, body, feet, or most of the tail.
+Scene/backdrop: plain pale sky-blue background with no texture, scenery, or other objects.
+Subject: single side-view yellow songbird with a warm golden-yellow body, darker ochre wing accents, small orange beak, black eye, slender legs, and a clearly readable silhouette.
+Style/medium: polished high-resolution digital illustration with softly shaded shapes and gentle gradients; explicitly not pixel art, not a grid, not bead art, and not a template.
+Composition/framing: centered full bird and branch with generous empty margin; label visibly overlaps only the far tail tip in the foreground.
+Lighting/mood: bright clean studio-like lighting.
+Constraints: original imagery only; paper label must be blank; no watermark, logo, letters, text, person, additional animal, border, grid lines, legend, counts, UI, or bead pattern.
+Avoid: photographic look, busy background, subject cropping, label over the body, final craft template.
+
+Semantic-cleanup prompt
+=======================
+
+Use case: precise-object-edit
+Asset type: semantic-cleanup intermediate for a deterministic craft-pattern compiler
+Input images: Image 1: edit target, the original yellow songbird illustration with a blank foreground paper label over the tail
+Primary request: Remove only the foreground paper label and conservatively restore the small hidden outer tail portion by continuing the visible tail direction, feather shape, golden-yellow color, ochre accents, and edge taper. Replace the pale-blue background with pure white while keeping the bird and its existing branch intact.
+Subject invariants: preserve the bird's head, eye, beak, body proportions, pose, wing details, legs, feet, visible tail, branch geometry, colors, lighting, and clean side-view silhouette. Do not redesign or embellish the bird. Reconstruction must be limited to the tiny tail area hidden by the label.
+Composition/framing: preserve the original centered framing and generous margin.
+Constraints: change only the paper-label area and background; no new objects; no text, watermark, logo, grid lines, legend, counts, border, UI, beads, bead pattern, or final template.
+Avoid: changing anatomy, pose, expression, feather style, branch, crop, or subject scale.
+Output intent: a clean source image only; the deterministic compiler, not the image model, will generate the grid and quantities.
+
+Verification note
+=================
+
+The label hides source pixels, so the restored tail cannot be independently
+verified. The deterministic compilation is therefore `review-required`.

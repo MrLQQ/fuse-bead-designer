@@ -72,3 +72,24 @@ def test_documented_example_outputs_agree():
     for path in Path("examples/outputs").glob("*/pattern.json"):
         data = json.loads(path.read_text(encoding="utf-8"))
         assert data["total_beads"] == sum(data["color_counts"].values())
+
+
+def test_public_gallery_has_four_real_compiler_examples():
+    examples = (
+        "occluded-finished-beads",
+        "occluded-high-resolution-image",
+        "actual-object-photo",
+        "high-resolution-mascot",
+    )
+    for name in examples:
+        assert Path(f"examples/inputs/{name}.png").is_file()
+        output = Path("examples/outputs") / name
+        for artifact in ("pattern.json", "template.png", "colors.csv", "report.json"):
+            assert (output / artifact).is_file()
+
+
+def test_gallery_counts_are_compiler_consistent():
+    for name in ("occluded-high-resolution-image", "actual-object-photo"):
+        output = Path("examples/outputs") / name
+        pattern = json.loads((output / "pattern.json").read_text(encoding="utf-8"))
+        assert pattern["total_beads"] == sum(pattern["color_counts"].values())

@@ -1,0 +1,50 @@
+{
+  "board_decision": {
+    "alternatives": [],
+    "columns": 2,
+    "height": 29,
+    "is_custom_size": false,
+    "rows": 1,
+    "score": 0.0,
+    "width": 58
+  },
+  "classification": "high-resolution-image",
+  "cleanup_changes": [
+    [
+      34,
+      10
+    ],
+    [
+      24,
+      15
+    ]
+  ],
+  "inferred_cells": [],
+  "palette_decision": {
+    "color_ids": [
+      "black",
+      "charcoal",
+      "gray",
+      "warm-white",
+      "red",
+      "orange",
+      "yellow",
+      "lime",
+      "green",
+      "dark-green",
+      "turquoise",
+      "blue",
+      "purple",
+      "pink",
+      "brown",
+      "tan"
+    ],
+    "color_limit": 16,
+    "source": "generic"
+  },
+  "removed_interference": [
+    "studio-background"
+  ],
+  "verification": "verified",
+  "warnings": []
+}
