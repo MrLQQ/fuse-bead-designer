@@ -6,7 +6,7 @@
   board layout, mechanically verified logical grids, deterministic compilation,
   and final source/draft/template comparison.
 - Added `references/pattern-draft-contract.md` for image-generation/editing
-  prompts and acceptance rules while keeping `SKILL.md` at 113 lines.
+  prompts and acceptance rules while keeping `SKILL.md` under 500 lines.
 - Added a redistributable synthetic dark-character fixture. It contains a
   `37 x 41` logical grid rendered at `4x`, 8-pixel transparent display padding,
   two one-cell eyes, a three-color forehead ornament, thin turquoise edges, and
