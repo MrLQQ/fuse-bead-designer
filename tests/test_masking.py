@@ -1,3 +1,4 @@
+import pytest
 from PIL import Image, ImageDraw
 
 from fuse_bead_designer.masking import derive_subject_mask
@@ -37,3 +38,11 @@ def test_rgba_mask_uses_alpha_occupancy_without_background_detection():
     mask = derive_subject_mask(image)
 
     assert list(mask.get_flattened_data()) == [255, 255, 0, 0, 0, 0]
+
+
+@pytest.mark.parametrize("tolerance", [float("nan"), float("inf"), float("-inf"), True, "18"])
+def test_mask_rejects_non_finite_or_non_numeric_tolerance(tolerance):
+    image = Image.new("RGB", (1, 1), "white")
+
+    with pytest.raises(ValueError, match="tolerance must be a finite non-negative number"):
+        derive_subject_mask(image, tolerance=tolerance)

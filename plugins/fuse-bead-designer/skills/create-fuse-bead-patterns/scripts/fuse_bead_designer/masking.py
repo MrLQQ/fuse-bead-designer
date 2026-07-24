@@ -1,6 +1,7 @@
 """Subject occupancy masks with explicit white-bead preservation."""
 
 from collections import deque
+from math import isfinite
 from statistics import median
 
 from PIL import Image
@@ -15,10 +16,13 @@ def derive_subject_mask(image: Image.Image, tolerance: float = 18) -> Image.Imag
     """
     if not isinstance(image, Image.Image):
         raise TypeError("image must be a Pillow Image")
-    if isinstance(tolerance, bool) or not isinstance(tolerance, (int, float)):
-        raise ValueError("tolerance must be a non-negative number")
-    if tolerance < 0:
-        raise ValueError("tolerance must be a non-negative number")
+    if (
+        isinstance(tolerance, bool)
+        or not isinstance(tolerance, (int, float))
+        or not isfinite(tolerance)
+        or tolerance < 0
+    ):
+        raise ValueError("tolerance must be a finite non-negative number")
 
     if "A" in image.getbands() or "transparency" in image.info:
         return _alpha_occupancy_mask(image)
