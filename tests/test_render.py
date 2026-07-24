@@ -11,7 +11,14 @@ from fuse_bead_designer.models import (
     Pattern,
     VerificationState,
 )
-from fuse_bead_designer.render import FONT_PATH, render_template
+from fuse_bead_designer.render import (
+    FONT_PATH,
+    LEGEND_WIDTH,
+    _color_metadata,
+    _coordinate_labels,
+    _used_palette_rows,
+    render_template,
+)
 
 
 def make_pattern(*, inferred_cells=None, is_custom_size=True):
@@ -187,6 +194,33 @@ def test_template_contains_grid_labels_legend_and_portable_cjk_font():
     assert ImageFont.truetype(FONT_PATH, 16).getmask("红色").getbbox() is not None
 
 
+def test_coordinate_labels_show_only_five_cell_milestones():
+    assert _coordinate_labels(4) == []
+    assert _coordinate_labels(29) == [5, 10, 15, 20, 25, 29]
+    assert _coordinate_labels(58) == [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 58]
+
+
+def test_legend_contains_only_used_colors_and_right_side_has_room():
+    pattern = make_pattern()
+    pattern.palette.append(PaletteColor("blue", "Blue", "蓝色", "#2684FF"))
+
+    rows = _used_palette_rows(pattern)
+
+    assert [(color.id, count) for color, count in rows] == [
+        ("red", 3),
+        ("white", 1),
+    ]
+    assert LEGEND_WIDTH >= 360
+
+
+def test_color_metadata_does_not_duplicate_hex_without_brand_code():
+    generic = PaletteColor("white", "Warm White", "暖白", "#F7F4EA")
+    branded = PaletteColor("red", "Red", "红色", "#FF0000", "R01")
+
+    assert _color_metadata(generic) == "#F7F4EA"
+    assert _color_metadata(branded) == "#FF0000 · R01"
+
+
 def test_standard_template_draws_five_cell_and_29_board_boundaries():
     pattern = Pattern(
         width=29,
@@ -199,7 +233,7 @@ def test_standard_template_draws_five_cell_and_29_board_boundaries():
 
     image = render_template(pattern, cell_size=4)
 
-    # Grid origin is public renderer geometry: labels occupy the 32-pixel margin.
-    grid_left, grid_top = 32, 32
+    # Grid origin is public renderer geometry.
+    grid_left, grid_top = 54, 66
     assert image.getpixel((grid_left + 5 * 4, grid_top + 2))[:3] == (82, 82, 82)
     assert image.getpixel((grid_left + 29 * 4, grid_top + 2))[:3] == (30, 30, 30)
