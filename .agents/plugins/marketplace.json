@@ -1,7 +1,7 @@
 {
-  "name": "personal",
+  "name": "fuse-bead-designer",
   "interface": {
-    "displayName": "Personal"
+    "displayName": "Fuse Bead Designer"
   },
   "plugins": [
     {
