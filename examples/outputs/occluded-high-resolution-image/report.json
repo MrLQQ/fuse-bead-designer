@@ -9,24 +9,24 @@
     "width": 58
   },
   "classification": "high-resolution-image",
-  "cleanup_changes": [
-    [
-      23,
-      28
+  "cleanup": false,
+  "cleanup_changes": [],
+  "compiled_input": "examples/intermediates/occluded-high-resolution-image-pattern-draft.png",
+  "draft_input": "examples/intermediates/occluded-high-resolution-image-pattern-draft.png",
+  "draft_used": true,
+  "grid_box": null,
+  "grid_evidence": {
+    "box": [
+      0,
+      0,
+      232,
+      232
     ],
-    [
-      24,
-      28
-    ],
-    [
-      30,
-      39
-    ],
-    [
-      29,
-      44
-    ]
-  ],
+    "confidence": 1.0,
+    "height": 58,
+    "source": "declared",
+    "width": 58
+  },
   "inferred_cells": [],
   "palette_decision": {
     "color_ids": [
@@ -54,6 +54,9 @@
     "foreground-paper-label",
     "background"
   ],
+  "sampling": "center",
+  "source_classification": "high-resolution-image",
+  "source_input": "examples/inputs/occluded-high-resolution-image.png",
   "verification": "review-required",
   "warnings": [
     "Quantities are provisional until review is confirmed."

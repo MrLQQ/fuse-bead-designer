@@ -2,14 +2,31 @@
   "board_decision": {
     "alternatives": [],
     "columns": 1,
-    "height": 29,
-    "is_custom_size": false,
+    "height": 16,
+    "is_custom_size": true,
     "rows": 1,
     "score": 0.0,
-    "width": 29
+    "width": 16
   },
   "classification": "pixel-art",
+  "cleanup": false,
   "cleanup_changes": [],
+  "compiled_input": "examples/inputs/clean-pixel-art.png",
+  "draft_input": null,
+  "draft_used": false,
+  "grid_box": null,
+  "grid_evidence": {
+    "box": [
+      0,
+      0,
+      64,
+      64
+    ],
+    "confidence": 1.0,
+    "height": 16,
+    "source": "declared",
+    "width": 16
+  },
   "inferred_cells": [],
   "palette_decision": {
     "color_ids": [
@@ -34,6 +51,9 @@
     "source": "generic"
   },
   "removed_interference": [],
+  "sampling": "center",
+  "source_classification": "pixel-art",
+  "source_input": "examples/inputs/clean-pixel-art.png",
   "verification": "verified",
   "warnings": []
 }

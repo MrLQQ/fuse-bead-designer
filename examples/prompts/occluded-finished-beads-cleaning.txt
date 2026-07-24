@@ -1,6 +1,7 @@
 Use case: semantic-cleanup-intermediate
 Source: examples/inputs/occluded-finished-beads.png
 Output: examples/intermediates/occluded-finished-beads-clean.png
+Rectified declared grid: examples/intermediates/occluded-finished-beads-pattern-draft.png
 
 Isolate only the purple octopus fuse-bead artwork, preserving its front-facing
 proportions, bead-grid geometry, colors, face, and tentacle shapes. Remove the
@@ -14,3 +15,10 @@ text, counts, borders, or UI.
 The intermediate is not the count source. The deterministic compiler produces
 the grid and quantities. Because the hidden cells cannot be independently
 verified from the raw photo, the public example remains `review-required`.
+
+For the v0.3 migration, the 58 × 58 rectified declared grid is a lossless
+four-raster-pixels-per-cell rendering of the previously committed public
+compiler matrix. It was created locally and deterministically; no user image or
+image-generation call was involved. It is compiled only through
+`--classification finished-bead-photo --rectified-grid`; the raw photo is
+provenance evidence, not a claimed automatically detected lattice.

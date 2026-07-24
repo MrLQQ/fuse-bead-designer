@@ -7,6 +7,7 @@ imagery was used.
 
 Source: examples/inputs/occluded-high-resolution-image.png
 Clean intermediate: examples/intermediates/occluded-high-resolution-image-clean.png
+Semantic pattern draft: examples/intermediates/occluded-high-resolution-image-pattern-draft.png
 Final template: produced only by the bundled deterministic compiler
 
 Source-generation prompt
@@ -41,3 +42,13 @@ Verification note
 
 The label hides source pixels, so the restored tail cannot be independently
 verified. The deterministic compilation is therefore `review-required`.
+
+v0.3 pattern-draft migration
+============================
+
+The 58 × 58 semantic pattern draft is a lossless
+four-raster-pixels-per-cell rendering of the previously committed public
+compiler matrix. It was created locally and deterministically; no user image or
+image-generation call was involved. The v0.3 high-resolution route keeps the
+original illustration as `--input` and compiles the separate draft through
+`--draft-input`; it does not resample the original display pixels as beads.

@@ -1,8 +1,20 @@
 Use case: illustration-story
 Asset type: openly distributable raw evaluation fixture for a craft-pattern conversion task
+Source: examples/inputs/high-resolution-mascot.png
+Semantic pattern draft: examples/intermediates/high-resolution-mascot-pattern-draft.png
 Primary request: Create an original clean non-pixel mascot illustration of a cheerful red panda librarian wearing round glasses and a teal scarf, holding one small golden book.
 Scene/backdrop: plain warm cream background with no objects, no texture, and no text.
 Style/medium: polished high-resolution digital illustration with soft shaded shapes and gentle color gradients; explicitly not pixel art, not a grid, and not bead art.
 Composition/framing: centered full-body subject with generous empty margin, single subject, clear silhouette.
 Lighting/mood: bright friendly studio-like lighting.
 Constraints: no watermark, no logo, no letters, no other characters, no frame.
+
+v0.3 pattern-draft migration
+============================
+
+The 58 × 58 semantic pattern draft is a lossless
+four-raster-pixels-per-cell rendering of the previously committed public
+compiler matrix. It was created locally and deterministically; no user image or
+image-generation call was involved. The v0.3 high-resolution route keeps the
+original illustration as `--input` and compiles the separate semantic draft
+through `--draft-input`.

@@ -1871,9 +1871,29 @@
   ],
   "schema_version": 1,
   "settings": {
+    "cleanup": false,
     "colors": 16,
+    "compiled_input": "examples/intermediates/actual-object-photo-pattern-draft.png",
+    "draft_input": "examples/intermediates/actual-object-photo-pattern-draft.png",
+    "draft_used": true,
+    "grid_box": null,
+    "grid_evidence": {
+      "box": [
+        0,
+        0,
+        232,
+        116
+      ],
+      "confidence": 1.0,
+      "height": 29,
+      "source": "declared",
+      "width": 58
+    },
     "max_boards": 4,
-    "protected_cells": []
+    "protected_cells": [],
+    "sampling": "center",
+    "source_classification": "high-resolution-image",
+    "source_input": "examples/inputs/actual-object-photo.png"
   },
   "total_beads": 501,
   "verification": "verified",

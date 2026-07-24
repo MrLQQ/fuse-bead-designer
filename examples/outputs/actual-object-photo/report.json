@@ -9,44 +9,24 @@
     "width": 58
   },
   "classification": "high-resolution-image",
-  "cleanup_changes": [
-    [
-      35,
-      10
+  "cleanup": false,
+  "cleanup_changes": [],
+  "compiled_input": "examples/intermediates/actual-object-photo-pattern-draft.png",
+  "draft_input": "examples/intermediates/actual-object-photo-pattern-draft.png",
+  "draft_used": true,
+  "grid_box": null,
+  "grid_evidence": {
+    "box": [
+      0,
+      0,
+      232,
+      116
     ],
-    [
-      32,
-      11
-    ],
-    [
-      29,
-      12
-    ],
-    [
-      29,
-      13
-    ],
-    [
-      26,
-      14
-    ],
-    [
-      27,
-      14
-    ],
-    [
-      24,
-      15
-    ],
-    [
-      21,
-      16
-    ],
-    [
-      23,
-      16
-    ]
-  ],
+    "confidence": 1.0,
+    "height": 29,
+    "source": "declared",
+    "width": 58
+  },
   "inferred_cells": [],
   "palette_decision": {
     "color_ids": [
@@ -74,6 +54,9 @@
     "studio-background",
     "studio-shadow"
   ],
+  "sampling": "center",
+  "source_classification": "high-resolution-image",
+  "source_input": "examples/inputs/actual-object-photo.png",
   "verification": "verified",
   "warnings": []
 }

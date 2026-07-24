@@ -8,6 +8,7 @@ source by adding a transparency matte, not by regenerating the subject.
 
 Source: examples/inputs/actual-object-photo.png
 Clean intermediate: examples/intermediates/actual-object-photo-clean.png
+Semantic pattern draft: examples/intermediates/actual-object-photo-pattern-draft.png
 Final template: produced only by the bundled deterministic compiler
 
 Source-generation prompt
@@ -35,6 +36,15 @@ original image's saturation and value channels, is constrained to the visible
 shoe silhouette, and fills enclosed white regions such as the laces, toe cap,
 sidewall, and outsole. No image model was used for cleanup and no subject pixel
 was repainted.
+
+v0.3 pattern-draft migration
+============================
+
+The semantic pattern draft is a lossless four-raster-pixels-per-cell rendering
+of the previously committed public compiler matrix. It was created locally and
+deterministically; no user image or image-generation call was involved. The
+v0.3 compiler keeps the original source above as `--input` and consumes this
+separate draft through `--draft-input` with the declared 58 × 29 logical grid.
 
 Verification note
 =================

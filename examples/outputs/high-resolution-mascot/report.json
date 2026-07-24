@@ -9,16 +9,24 @@
     "width": 58
   },
   "classification": "high-resolution-image",
-  "cleanup_changes": [
-    [
-      34,
-      12
+  "cleanup": false,
+  "cleanup_changes": [],
+  "compiled_input": "examples/intermediates/high-resolution-mascot-pattern-draft.png",
+  "draft_input": "examples/intermediates/high-resolution-mascot-pattern-draft.png",
+  "draft_used": true,
+  "grid_box": null,
+  "grid_evidence": {
+    "box": [
+      0,
+      0,
+      232,
+      232
     ],
-    [
-      30,
-      17
-    ]
-  ],
+    "confidence": 1.0,
+    "height": 58,
+    "source": "declared",
+    "width": 58
+  },
   "inferred_cells": [],
   "palette_decision": {
     "color_ids": [
@@ -43,6 +51,9 @@
     "source": "generic"
   },
   "removed_interference": [],
+  "sampling": "center",
+  "source_classification": "high-resolution-image",
+  "source_input": "examples/inputs/high-resolution-mascot.png",
   "verification": "verified",
   "warnings": []
 }

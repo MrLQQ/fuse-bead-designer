@@ -3527,9 +3527,29 @@
   ],
   "schema_version": 1,
   "settings": {
+    "cleanup": false,
     "colors": 16,
+    "compiled_input": "examples/intermediates/occluded-finished-beads-pattern-draft.png",
+    "draft_input": null,
+    "draft_used": false,
+    "grid_box": null,
+    "grid_evidence": {
+      "box": [
+        0,
+        0,
+        232,
+        232
+      ],
+      "confidence": 1.0,
+      "height": 58,
+      "source": "declared",
+      "width": 58
+    },
     "max_boards": 4,
-    "protected_cells": []
+    "protected_cells": [],
+    "sampling": "center",
+    "source_classification": "finished-bead-photo",
+    "source_input": "examples/intermediates/occluded-finished-beads-pattern-draft.png"
   },
   "total_beads": 1525,
   "verification": "review-required",

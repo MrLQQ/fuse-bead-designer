@@ -17,3 +17,7 @@ neighbor scaling to a 64 × 64 RGBA PNG. Its seven RGBA colors are:
 
 It was added after the task controller resolved the brief's missing public
 pixel-art input by approving a local Pillow-authored fixture.
+
+The v0.3 example compiles the verified 16 × 16 logical grid explicitly. The
+64 × 64 raster is exactly four raster pixels per logical cell; its display size
+is not used as a bead count or board target.

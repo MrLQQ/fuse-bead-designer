@@ -1,3 +1,4 @@
+import csv
 import json
 from pathlib import Path
 
@@ -231,7 +232,18 @@ def test_skill_high_resolution_command_preserves_original_and_draft_provenance()
 def test_documented_example_outputs_agree():
     for path in Path("examples/outputs").glob("*/pattern.json"):
         data = json.loads(path.read_text(encoding="utf-8"))
+        output = path.parent
+        with (output / "colors.csv").open(encoding="utf-8", newline="") as stream:
+            csv_counts = {
+                row["id"]: int(row["count"])
+                for row in csv.DictReader(stream)
+                if int(row["count"])
+            }
+
         assert data["total_beads"] == sum(data["color_counts"].values())
+        assert csv_counts == data["color_counts"]
+        for artifact in ("template.png", "report.json"):
+            assert (output / artifact).is_file()
 
 
 def test_public_gallery_has_four_real_compiler_examples():
@@ -253,6 +265,118 @@ def test_gallery_counts_are_compiler_consistent():
         output = Path("examples/outputs") / name
         pattern = json.loads((output / "pattern.json").read_text(encoding="utf-8"))
         assert pattern["total_beads"] == sum(pattern["color_counts"].values())
+
+
+def test_public_examples_use_exact_v03_source_routes():
+    route_expectations = {
+        "clean-pixel-art": {
+            "classification": "pixel-art",
+            "source_input": "examples/inputs/clean-pixel-art.png",
+            "compiled_input": "examples/inputs/clean-pixel-art.png",
+            "draft_input": None,
+            "width": 16,
+            "height": 16,
+        },
+        "occluded-finished-beads": {
+            "classification": "finished-bead-photo",
+            "source_input": (
+                "examples/intermediates/occluded-finished-beads-pattern-draft.png"
+            ),
+            "compiled_input": (
+                "examples/intermediates/occluded-finished-beads-pattern-draft.png"
+            ),
+            "draft_input": None,
+            "width": 58,
+            "height": 58,
+        },
+        "occluded-high-resolution-image": {
+            "classification": "high-resolution-image",
+            "source_input": "examples/inputs/occluded-high-resolution-image.png",
+            "compiled_input": (
+                "examples/intermediates/"
+                "occluded-high-resolution-image-pattern-draft.png"
+            ),
+            "draft_input": (
+                "examples/intermediates/"
+                "occluded-high-resolution-image-pattern-draft.png"
+            ),
+            "width": 58,
+            "height": 58,
+        },
+        "actual-object-photo": {
+            "classification": "high-resolution-image",
+            "source_input": "examples/inputs/actual-object-photo.png",
+            "compiled_input": (
+                "examples/intermediates/actual-object-photo-pattern-draft.png"
+            ),
+            "draft_input": (
+                "examples/intermediates/actual-object-photo-pattern-draft.png"
+            ),
+            "width": 58,
+            "height": 29,
+        },
+        "high-resolution-mascot": {
+            "classification": "high-resolution-image",
+            "source_input": "examples/inputs/high-resolution-mascot.png",
+            "compiled_input": (
+                "examples/intermediates/high-resolution-mascot-pattern-draft.png"
+            ),
+            "draft_input": (
+                "examples/intermediates/high-resolution-mascot-pattern-draft.png"
+            ),
+            "width": 58,
+            "height": 58,
+        },
+    }
+
+    for name, expected in route_expectations.items():
+        output = Path("examples/outputs") / name
+        pattern = json.loads((output / "pattern.json").read_text(encoding="utf-8"))
+        report = json.loads((output / "report.json").read_text(encoding="utf-8"))
+        settings = pattern["settings"]
+
+        assert pattern["width"] == expected["width"]
+        assert pattern["height"] == expected["height"]
+        assert settings["grid_evidence"]["source"] == "declared"
+        assert settings["source_classification"] == expected["classification"]
+        assert settings["sampling"] == "center"
+        assert settings["cleanup"] is False
+        assert settings["source_input"] == expected["source_input"]
+        assert settings["compiled_input"] == expected["compiled_input"]
+        assert settings["draft_input"] == expected["draft_input"]
+
+        assert report["classification"] == expected["classification"]
+        assert report["source_classification"] == expected["classification"]
+        assert report["grid_evidence"] == settings["grid_evidence"]
+        assert report["sampling"] == "center"
+        assert report["cleanup"] is False
+        assert report["source_input"] == expected["source_input"]
+        assert report["compiled_input"] == expected["compiled_input"]
+        assert report["draft_input"] == expected["draft_input"]
+        assert report["draft_used"] is (expected["draft_input"] is not None)
+        assert report["cleanup_changes"] == []
+        assert report["inferred_cells"] == []
+        assert not (output / "review.png").exists()
+
+        with Image.open(expected["compiled_input"]) as compiled:
+            assert compiled.width >= expected["width"] * 4
+            assert compiled.height >= expected["height"] * 4
+
+
+def test_v03_release_archive_contract_replaces_v02():
+    packager = Path("tools/package_release.py").read_text(encoding="utf-8")
+    plugin = json.loads(
+        Path("plugins/fuse-bead-designer/.codex-plugin/plugin.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert "v0.2.0" not in packager
+    assert 'VERSION = "0.3.0"' in packager
+    assert 'f"fuse-bead-designer-plugin-v{VERSION}.zip"' in packager
+    assert 'f"create-fuse-bead-patterns-skill-v{VERSION}.zip"' in packager
+    assert "member = Path(source.name) / path.relative_to(source)" in packager
+    assert plugin["version"] == "0.3.0"
 
 
 def test_verified_object_cutout_preserves_source_pixels_and_white_details():
