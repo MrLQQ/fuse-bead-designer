@@ -2,6 +2,7 @@ import csv
 import json
 
 from PIL import ImageFont
+import pytest
 
 from fuse_bead_designer.io import write_artifacts
 from fuse_bead_designer.models import (
@@ -103,6 +104,46 @@ def test_review_overlay_is_only_written_for_inferred_or_cleanup_markers(tmp_path
 
     write_artifacts(make_pattern(), tmp_path / "none")
     assert not (tmp_path / "none" / "review.png").exists()
+
+
+def test_clean_write_removes_a_stale_review_overlay_from_the_same_output_dir(tmp_path):
+    output_dir = tmp_path / "reused"
+
+    write_artifacts(make_pattern(inferred_cells=[(0, 0)]), output_dir)
+    assert (output_dir / "review.png").exists()
+
+    write_artifacts(make_pattern(), output_dir)
+    assert not (output_dir / "review.png").exists()
+
+
+@pytest.mark.parametrize(
+    ("cleanup_changes", "message"),
+    [
+        ([(0, 0, 0)], "cleanup change must be a coordinate pair"),
+        ([(True, 0)], "cleanup change coordinates must be integers"),
+        ([(0, "0")], "cleanup change coordinates must be integers"),
+        ([(3, 0)], "cleanup change is outside the grid"),
+        ([(0, 2)], "cleanup change is outside the grid"),
+    ],
+)
+def test_invalid_cleanup_markers_are_rejected_before_any_artifact_is_written(
+    tmp_path, cleanup_changes, message
+):
+    report = CompileReport(
+        classification="pixel-art",
+        removed_interference=[],
+        board_decision={},
+        palette_decision={},
+        cleanup_changes=cleanup_changes,
+        warnings=[],
+        verification=VerificationState.VERIFIED,
+    )
+    output_dir = tmp_path / "invalid"
+
+    with pytest.raises(ValueError, match=message):
+        write_artifacts(make_pattern(), output_dir, report=report)
+
+    assert not output_dir.exists()
 
 
 def test_template_contains_grid_labels_legend_and_portable_cjk_font():

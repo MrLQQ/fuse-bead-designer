@@ -19,14 +19,18 @@ def write_artifacts(
 ) -> None:
     """Write count-consistent image, JSON, CSV, report, and conditional review PNG."""
     pattern.validate()
+    _validate_cleanup_changes(pattern, report)
     destination = Path(output_dir)
     destination.mkdir(parents=True, exist_ok=True)
+    review_path = destination / "review.png"
     _write_json(destination / "pattern.json", pattern.to_dict())
     _write_colors_csv(pattern, destination / "colors.csv")
     _write_json(destination / "report.json", _report_data(pattern, report))
     render_template(pattern).save(destination / "template.png")
     if pattern.inferred_cells or (report is not None and report.cleanup_changes):
-        render_review(pattern, report).save(destination / "review.png")
+        render_review(pattern, report).save(review_path)
+    else:
+        review_path.unlink(missing_ok=True)
 
 
 def _write_json(path: Path, data: dict[str, object]) -> None:
@@ -70,3 +74,23 @@ def _report_data(pattern: Pattern, report: CompileReport | None) -> dict[str, ob
         "warnings": [],
         "verification": pattern.verification.value,
     }
+
+
+def _validate_cleanup_changes(pattern: Pattern, report: CompileReport | None) -> None:
+    if report is None:
+        return
+    if not isinstance(report.cleanup_changes, list):
+        raise ValueError("cleanup_changes must be a list")
+    for change in report.cleanup_changes:
+        if not isinstance(change, (list, tuple)) or len(change) != 2:
+            raise ValueError("cleanup change must be a coordinate pair")
+        column, row = change
+        if (
+            not isinstance(column, int)
+            or isinstance(column, bool)
+            or not isinstance(row, int)
+            or isinstance(row, bool)
+        ):
+            raise ValueError("cleanup change coordinates must be integers")
+        if not (0 <= column < pattern.width and 0 <= row < pattern.height):
+            raise ValueError("cleanup change is outside the grid")

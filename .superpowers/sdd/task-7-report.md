@@ -58,13 +58,33 @@ Result: `98 passed in 0.55s`. The bundled Python 3.12 `py_compile` check for
 
 ```text
 3fbf44bb9209e7cc6d61ceaebb26e67b9500195745171a704dcf507efa17a105  plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/fuse_bead_designer/render.py
-0591882b4bc372aa1c5b12466d60aa8ad0d13760fdb3cbd027c6e0dcf47249fd  plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/fuse_bead_designer/io.py
+4593449c3431d4b3467bb6864a24f1620ae32de4339015a8aa8b1c69798473ba  plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/fuse_bead_designer/io.py
 2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b  plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/assets/fonts/NotoSansCJKsc-Regular.otf
 6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2  plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/assets/fonts/OFL.txt
 1a544f262d7a4015f681e5ce2d1b102659f23ce71865724a164e97092bb2dce1  plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/CONTRIBUTING.md
-7e01fbbdc8da47951469a779ffad7db036cc1d2c7708e4f84b46052955d52d0d  tests/test_render.py
+c4a61385e9e8fa979c85bfebde00fbef115beb6e301199159095b5866df56106  tests/test_render.py
 ```
 
 ## Commit
 
 `feat: render count-accurate bead templates`
+
+## Corrective follow-up
+
+Regression tests were written before the corrective implementation. RED showed
+that a clean rewrite left an existing `review.png` in place; malformed cleanup
+markers either rendered outside the grid or raised only after writers had
+started producing artifacts.
+
+`write_artifacts` now validates every cleanup marker before creating the output
+directory: each must be a two-item list/tuple of non-boolean integers within
+the pattern grid. A clean derivation removes only
+`destination / "review.png"`, preventing stale review output without touching
+other files.
+
+Corrective focused result: `60 passed in 0.54s`.
+
+Corrective full result: `104 passed in 0.58s`; Python 3.12 `py_compile` for
+`io.py` and `git diff --check` also passed.
+
+Corrective commit: `fix: keep review artifacts consistent`.
