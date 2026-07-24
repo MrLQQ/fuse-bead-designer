@@ -7,7 +7,7 @@ real workflow branch; the compiler still creates the only countable grid.
 | --- | --- | --- |
 | `finished-bead-photo` | Physical round beads, pegboard, camera angle, hands, table, glare, or shadows | Identify the bead subject, exclude interference, correct perspective, and produce a clean front-facing declared grid. Compile only with `--rectified-grid`, paired `--width`/`--height`, and optional `--grid-box`. Do not interpret a hand, board holes, shadow, or reflection as beads. |
 | `pixel-art` | Intentional hard-edged logical pixels, often scaled with nearest-neighbor edges | Preserve logical pixels and intentional empty cells. Verify its logical dimensions, then compile with paired `--width`/`--height`; automatic recovery is allowed only when uniquely provable. |
-| `high-resolution-image` | Illustration or photograph with continuous detail, gradients, or no pre-existing cell grid | Create a plain semantic pattern draft first; compile the original only through `--draft-input` with verified draft dimensions. Never sample the high-resolution original directly into a final grid. |
+| `high-resolution-image` | Illustration or photograph with continuous detail, gradients, or no pre-existing cell grid | Create a plain semantic pattern draft first; compile the original only through `--draft-input` with verified draft dimensions. Never sample the high-resolution original directly into a final grid. This classification cannot use `verified`; select `inferred-low` or `review-required`. |
 | `pattern-draft` | Plain grid-aligned intermediate produced by restoration or semantic design | Compile the exact declared logical grid with paired `--width`/`--height` and optional `--grid-box`. Do not redesign it during deterministic compilation. |
 
 ## Grid evidence and route defaults
@@ -20,6 +20,10 @@ real workflow branch; the compiler still creates the only countable grid.
 - `pixel-art`, `pattern-draft`, and rectified finished-bead grids use center
   sampling. Automatic singleton cleanup is disabled by default so one-cell
   eyes, highlights, ornaments, thin edges, and intentional empty cells survive.
+- A `high-resolution-image` semantic draft records a design decision, not a
+  confirmed observation. It cannot use `verified`; use `inferred-low` only for
+  bounded, coordinate-recorded reconstruction and otherwise use
+  `review-required`.
 - Fix pattern dimensions before deriving board layout. Standard 29-cell boards
   tile the verified art afterward and never resize it.
 

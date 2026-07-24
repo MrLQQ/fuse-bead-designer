@@ -54,6 +54,8 @@
   "sampling": "center",
   "source_classification": "high-resolution-image",
   "source_input": "examples/inputs/high-resolution-mascot.png",
-  "verification": "verified",
-  "warnings": []
+  "verification": "review-required",
+  "warnings": [
+    "Quantities are provisional until review is confirmed."
+  ]
 }

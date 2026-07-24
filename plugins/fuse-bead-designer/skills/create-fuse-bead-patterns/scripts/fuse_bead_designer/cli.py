@@ -106,6 +106,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             has_pattern_draft=arguments.draft_input is not None,
             legacy_resample=arguments.legacy_resample,
         )
+        _validate_verification_for_route(arguments)
         arguments.sampling = arguments.sampling or arguments.route_policy.sampling
         arguments.cleanup = arguments.cleanup or arguments.route_policy.cleanup
         output_dir = Path(arguments.output_dir)
@@ -313,6 +314,17 @@ def _color_limit(value: str) -> int:
 def _validate_paired_size(arguments: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     if (arguments.width is None) != (arguments.height is None):
         parser.error("--width and --height must be provided together")
+
+
+def _validate_verification_for_route(arguments: argparse.Namespace) -> None:
+    if (
+        arguments.classification == "high-resolution-image"
+        and arguments.verification == VerificationState.VERIFIED.value
+    ):
+        raise ValueError(
+            "high-resolution-image requires inferred-low or review-required "
+            "verification"
+        )
 
 
 def _validate_output_dir(output_dir: Path, force: bool) -> None:

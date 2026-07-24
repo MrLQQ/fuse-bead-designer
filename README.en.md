@@ -65,13 +65,13 @@ All four rows below use real repository inputs and deterministic compiler output
     <td><strong>Actual object photo</strong><br>Subject extracted from a studio background</td>
     <td><img src="examples/inputs/actual-object-photo.png" alt="Actual object source photo" width="260"></td>
     <td><img src="examples/outputs/actual-object-photo/template.png" alt="Actual object fuse-bead template" width="360"></td>
-    <td>58 × 29<br>501 beads<br><code>verified</code></td>
+    <td>58 × 29<br>501 beads<br><code>review-required</code></td>
   </tr>
   <tr>
     <td><strong>High-resolution non-pixel illustration</strong><br>Continuous color reduced to a discrete grid</td>
     <td><img src="examples/inputs/high-resolution-mascot.png" alt="High-resolution non-pixel source" width="260"></td>
     <td><img src="examples/outputs/high-resolution-mascot/template.png" alt="High-resolution mascot fuse-bead template" width="360"></td>
-    <td>58 × 58<br>1,234 beads<br><code>verified</code></td>
+    <td>58 × 58<br>1,234 beads<br><code>review-required</code></td>
   </tr>
 </table>
 
@@ -87,7 +87,7 @@ Each generation delivers:
 
 Verification states are operational:
 
-- `verified`: no semantic reconstruction affected the subject; counts belong to the confirmed design.
+- `verified`: no semantic reconstruction affected the subject; counts belong to the confirmed design. The high-resolution route includes semantic pattern-draft design decisions and cannot use this state.
 - `inferred-low`: only limited, explainable reconstruction was used; inspect the markers.
 - `review-required`: a key region remains uncertain. Counts are provisional; inspect `report.json` and compare the source with the semantic pattern draft. Inspect `review.png` only when `report.json` lists `inferred_cells` or `cleanup_changes`; confirm the result before buying beads or building.
 

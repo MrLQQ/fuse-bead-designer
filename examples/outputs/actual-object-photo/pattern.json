@@ -1896,6 +1896,6 @@
     "source_input": "examples/inputs/actual-object-photo.png"
   },
   "total_beads": 501,
-  "verification": "verified",
+  "verification": "review-required",
   "width": 58
 }

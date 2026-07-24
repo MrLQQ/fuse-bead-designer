@@ -116,7 +116,10 @@ def test_cli_rejects_high_resolution_image_without_a_pattern_draft(
     assert "high-resolution-image requires has_pattern_draft=True" in result.stderr
 
 
-def test_cli_accepts_high_resolution_image_with_a_pattern_draft(tmp_path, clean_subject_path):
+@pytest.mark.parametrize("verification", ["inferred-low", "review-required"])
+def test_cli_accepts_high_resolution_image_with_a_pattern_draft(
+    tmp_path, clean_subject_path, verification
+):
     result = run_cli(
         clean_subject_path,
         tmp_path / "out",
@@ -128,9 +131,35 @@ def test_cli_accepts_high_resolution_image_with_a_pattern_draft(tmp_path, clean_
         "29",
         "--height",
         "29",
+        "--verification",
+        verification,
     )
 
     assert result.returncode == 0, result.stderr
+
+
+def test_cli_rejects_verified_high_resolution_image(tmp_path, clean_subject_path):
+    result = run_cli(
+        clean_subject_path,
+        tmp_path / "out",
+        "--classification",
+        "high-resolution-image",
+        "--draft-input",
+        str(clean_subject_path),
+        "--width",
+        "29",
+        "--height",
+        "29",
+        "--verification",
+        "verified",
+    )
+
+    assert result.returncode == 2
+    assert (
+        "high-resolution-image requires inferred-low or review-required "
+        "verification"
+    ) in result.stderr
+    assert "Traceback" not in result.stderr
 
 
 def test_cli_compiles_high_resolution_draft_and_records_original_provenance(tmp_path):
@@ -151,6 +180,8 @@ def test_cli_compiles_high_resolution_draft_and_records_original_provenance(tmp_
         "1",
         "--height",
         "1",
+        "--verification",
+        "review-required",
     )
 
     assert result.returncode == 0, result.stderr
@@ -185,6 +216,8 @@ def test_cli_validates_original_high_resolution_input_before_compiling_draft(
         "1",
         "--height",
         "1",
+        "--verification",
+        "review-required",
     )
 
     assert result.returncode == 2
@@ -427,6 +460,8 @@ def test_cli_legacy_resample_uses_original_instead_of_high_resolution_draft(tmp_
         "--height",
         "1",
         "--legacy-resample",
+        "--verification",
+        "review-required",
     )
 
     assert result.returncode == 0, result.stderr

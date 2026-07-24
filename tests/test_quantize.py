@@ -235,35 +235,41 @@ def test_center_sampling_rejects_invalid_grid_box(grid_box):
 
 
 @pytest.mark.parametrize(
-    ("image_size", "width", "height"),
-    [
-        ((3, 4), 1, 1),
-        ((4, 3), 1, 1),
-        ((7, 8), 2, 2),
-        ((8, 7), 2, 2),
-    ],
+    "scale",
+    [1, 2, 3],
 )
-def test_center_sampling_rejects_cells_smaller_than_four_source_pixels(
-    image_size,
-    width,
-    height,
-):
-    image = Image.new("RGB", image_size, "#111515")
+def test_center_sampling_supports_native_and_small_nearest_neighbor_scales(scale):
+    logical = Image.new("RGBA", (3, 2), (255, 255, 255, 0))
+    logical.putdata(
+        [
+            (*rgb("111515"), 255),
+            (*rgb("E53935"), 255),
+            (*rgb("2684FF"), 255),
+            (255, 255, 255, 0),
+            (*rgb("F7F4EA"), 255),
+            (*rgb("8E44AD"), 255),
+        ]
+    )
+    image = logical.resize((logical.width * scale, logical.height * scale), Image.Resampling.NEAREST)
 
-    with pytest.raises(ValueError, match="at least 4 source pixels"):
-        sample_cell_centers(
-            image,
-            Image.new("L", image.size, 255),
-            width,
-            height,
-            load_palette(),
-        )
+    cells = sample_cell_centers(
+        image,
+        image.getchannel("A"),
+        logical.width,
+        logical.height,
+        load_palette(),
+    )
+
+    assert [[cell.color_id for cell in row] for row in cells] == [
+        ["black", "red", "blue"],
+        [None, "warm-white", "purple"],
+    ]
 
 
 def test_center_sampling_rejects_grid_box_smaller_than_declared_grid():
     image = Image.new("RGB", (16, 16), "#111515")
 
-    with pytest.raises(ValueError, match="at least 4 source pixels"):
+    with pytest.raises(ValueError, match="smaller than the declared logical grid"):
         sample_cell_centers(
             image,
             Image.new("L", image.size, 255),

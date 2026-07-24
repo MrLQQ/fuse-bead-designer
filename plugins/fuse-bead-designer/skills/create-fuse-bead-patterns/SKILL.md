@@ -75,6 +75,11 @@ Perform these steps in order:
 4. Verify the actual logical grid mechanically.
 5. Compile it deterministically and compare before delivery.
 
+Because the semantic draft contains design decisions that are not confirmed by
+the deterministic compiler, `high-resolution-image` cannot use `verified`.
+Use `inferred-low` for bounded, coordinate-recorded reconstruction or
+`review-required` for other semantic drafts.
+
 ## Internal execution
 
 From this skill directory, compile an exact route with declared, verified
@@ -104,7 +109,7 @@ python scripts/create_pattern.py \
   --width <verified-logical-columns> \
   --height <verified-logical-rows> \
   --grid-box <left,top,right,bottom> \
-  --verification <verified|inferred-low|review-required>
+  --verification <inferred-low|review-required>
 ```
 
 Omit `--grid-box` only when the verified logical grid fills the draft image.

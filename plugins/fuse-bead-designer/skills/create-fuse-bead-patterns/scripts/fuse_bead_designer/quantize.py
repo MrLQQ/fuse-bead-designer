@@ -188,16 +188,16 @@ def _validate_center_sampling_geometry(
     width: int,
     height: int,
 ) -> None:
-    if right - left < width * 4 or bottom - top < height * 4:
+    if right - left < width or bottom - top < height:
         raise ValueError(
-            "center sampling requires at least 4 source pixels per logical cell "
-            "in each direction"
+            "center sampling grid box cannot be smaller than the declared "
+            "logical grid"
         )
 
 
 def _center_window(start: int, end: int) -> tuple[int, int]:
     rectangle_length = end - start
-    window_length = rectangle_length // 4
+    window_length = max(1, rectangle_length // 4)
     if window_length % 2 == 0:
         window_length -= 1
     assert window_length >= 1

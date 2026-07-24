@@ -65,13 +65,13 @@ v0.3.0 把“理解图片”和“生成可计数图纸”明确分开：先得�
     <td><strong>实际物体照片</strong><br>从摄影背景中提取主体</td>
     <td><img src="examples/inputs/actual-object-photo.png" alt="实际物体照片原图" width="260"></td>
     <td><img src="examples/outputs/actual-object-photo/template.png" alt="实际物体拼豆设计图" width="360"></td>
-    <td>58 × 29<br>501 颗<br><code>verified</code></td>
+    <td>58 × 29<br>501 颗<br><code>review-required</code></td>
   </tr>
   <tr>
     <td><strong>高清非像素插画</strong><br>连续色主体转离散色网格</td>
     <td><img src="examples/inputs/high-resolution-mascot.png" alt="高清非像素插画原图" width="260"></td>
     <td><img src="examples/outputs/high-resolution-mascot/template.png" alt="高清非像素插画拼豆设计图" width="360"></td>
-    <td>58 × 58<br>1234 颗<br><code>verified</code></td>
+    <td>58 × 58<br>1234 颗<br><code>review-required</code></td>
   </tr>
 </table>
 
@@ -87,7 +87,7 @@ v0.3.0 把“理解图片”和“生成可计数图纸”明确分开：先得�
 
 可信状态不是装饰信息：
 
-- `verified`：主体没有受语义补全影响，数量可作为已确认设计的用量。
+- `verified`：主体没有受语义补全影响，数量可作为已确认设计的用量。高清图片路线包含语义图案草稿的设计取舍，不能使用此状态。
 - `inferred-low`：仅有少量、可解释补全，需要查看标记。
 - `review-required`：关键区域仍不确定，当前数量只是暂定值；请先检查 `report.json`，并对照原始素材与语义图案草稿。只有 `report.json` 记录了 `inferred_cells` 或 `cleanup_changes` 时才会生成 `review.png`，届时再检查其中的坐标标记；确认后再采购或开拼。
 

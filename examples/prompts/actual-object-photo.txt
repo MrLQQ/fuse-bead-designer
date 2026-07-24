@@ -50,5 +50,7 @@ Verification note
 =================
 
 The shoe is fully visible, so no hidden area required reconstruction. The
-compiler now retains the principal red, warm-white, and tan color blocks. The
-deterministic compilation is `verified`.
+compiler retains the principal red, warm-white, and tan color blocks. However,
+the semantic pattern draft includes design simplification that the
+deterministic compiler cannot confirm, so this high-resolution route remains
+`review-required`.

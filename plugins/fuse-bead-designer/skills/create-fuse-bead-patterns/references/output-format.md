@@ -14,7 +14,8 @@ other artifacts are derived views or review evidence.
 ## Verification states
 
 - `verified`: No semantic reconstruction changed the subject. Compiler counts
-  may be reported as confirmed.
+  may be reported as confirmed. `high-resolution-image` cannot use `verified`
+  because its semantic pattern draft contains a design decision.
 - `inferred-low`: Limited, explainable reconstruction. Include the inferred
   cells and review overlay; identify the result as provisional reconstruction.
 - `review-required`: A key region remains uncertain. A candidate pattern may be

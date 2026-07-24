@@ -229,9 +229,10 @@ def test_skill_links_pattern_draft_contract_and_final_comparison():
 
 
 def test_skill_high_resolution_command_preserves_original_and_draft_provenance():
-    skill = Path(
-        "plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/SKILL.md"
-    ).read_text(encoding="utf-8")
+    skill_path = Path("plugins/fuse-bead-designer/skills/create-fuse-bead-patterns")
+    skill = (skill_path / "SKILL.md").read_text(encoding="utf-8")
+    routing = (skill_path / "references/input-routing.md").read_text(encoding="utf-8")
+    output = (skill_path / "references/output-format.md").read_text(encoding="utf-8")
     assert "<!-- high-resolution-command:start -->" in skill
     assert "<!-- high-resolution-command:end -->" in skill
     high_resolution_command = skill.split(
@@ -244,8 +245,12 @@ def test_skill_high_resolution_command_preserves_original_and_draft_provenance()
     assert "--width <verified-logical-columns>" in high_resolution_command
     assert "--height <verified-logical-rows>" in high_resolution_command
     assert "--grid-box <left,top,right,bottom>" in high_resolution_command
+    assert "--verification <inferred-low|review-required>" in high_resolution_command
     assert "Do not use the generic pattern-draft command" in high_resolution_command
     assert "counts or the final legend" in high_resolution_command
+    for contract in (skill, routing, output):
+        assert "high-resolution-image" in contract
+        assert "cannot use `verified`" in contract
 
 
 def test_documented_example_outputs_agree():
@@ -295,6 +300,7 @@ def test_public_examples_use_exact_v03_source_routes():
             "draft_input": None,
             "width": 16,
             "height": 16,
+            "verification": "verified",
         },
         "occluded-finished-beads": {
             "classification": "finished-bead-photo",
@@ -307,6 +313,7 @@ def test_public_examples_use_exact_v03_source_routes():
             "draft_input": None,
             "width": 58,
             "height": 58,
+            "verification": "review-required",
         },
         "occluded-high-resolution-image": {
             "classification": "high-resolution-image",
@@ -321,6 +328,7 @@ def test_public_examples_use_exact_v03_source_routes():
             ),
             "width": 58,
             "height": 58,
+            "verification": "review-required",
         },
         "actual-object-photo": {
             "classification": "high-resolution-image",
@@ -333,6 +341,7 @@ def test_public_examples_use_exact_v03_source_routes():
             ),
             "width": 58,
             "height": 29,
+            "verification": "review-required",
         },
         "high-resolution-mascot": {
             "classification": "high-resolution-image",
@@ -345,6 +354,7 @@ def test_public_examples_use_exact_v03_source_routes():
             ),
             "width": 58,
             "height": 58,
+            "verification": "review-required",
         },
     }
 
@@ -356,6 +366,7 @@ def test_public_examples_use_exact_v03_source_routes():
 
         assert pattern["width"] == expected["width"]
         assert pattern["height"] == expected["height"]
+        assert pattern["verification"] == expected["verification"]
         assert settings["grid_evidence"]["source"] == "declared"
         assert settings["source_classification"] == expected["classification"]
         assert settings["sampling"] == "center"
@@ -365,6 +376,7 @@ def test_public_examples_use_exact_v03_source_routes():
         assert settings["draft_input"] == expected["draft_input"]
 
         assert report["classification"] == expected["classification"]
+        assert report["verification"] == expected["verification"]
         assert report["source_classification"] == expected["classification"]
         assert report["grid_evidence"] == settings["grid_evidence"]
         assert report["sampling"] == "center"
@@ -398,7 +410,7 @@ def test_v03_release_archive_contract_replaces_v02():
     assert plugin["version"] == "0.3.0"
 
 
-def test_verified_object_cutout_preserves_source_pixels_and_white_details():
+def test_object_cutout_preserves_source_pixels_and_white_details():
     with Image.open("examples/inputs/actual-object-photo.png") as opened:
         source = opened.convert("RGB")
     with Image.open("examples/intermediates/actual-object-photo-clean.png") as opened:
@@ -417,4 +429,4 @@ def test_verified_object_cutout_preserves_source_pixels_and_white_details():
     pattern = json.loads((output / "pattern.json").read_text(encoding="utf-8"))
     report = json.loads((output / "report.json").read_text(encoding="utf-8"))
     assert pattern["color_counts"]["warm-white"] > 0
-    assert report["verification"] == "verified"
+    assert report["verification"] == "review-required"

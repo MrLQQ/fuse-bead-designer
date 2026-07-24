@@ -3640,6 +3640,6 @@
     "source_input": "examples/inputs/high-resolution-mascot.png"
   },
   "total_beads": 1234,
-  "verification": "verified",
+  "verification": "review-required",
   "width": 58
 }

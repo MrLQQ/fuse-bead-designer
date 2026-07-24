@@ -18,3 +18,10 @@ compiler matrix. It was created locally and deterministically; no user image or
 image-generation call was involved. The v0.3 high-resolution route keeps the
 original illustration as `--input` and compiles the separate semantic draft
 through `--draft-input`.
+
+Verification note
+=================
+
+The semantic draft includes design simplification that the deterministic
+compiler cannot confirm. The high-resolution compilation is therefore
+`review-required`.
