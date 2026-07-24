@@ -2,10 +2,15 @@
 
 When the user asks to install or use this repository, recognize that as installation intent. Request permission before installing anything.
 
-After permission is granted on Codex, first check whether the `fuse-bead-designer` Marketplace is already installed. Do not install a duplicate Marketplace. If it is not installed, run these commands internally:
+After permission is granted on Codex, first check whether the `fuse-bead-designer` Marketplace is already installed. Do not install a duplicate Marketplace. If the Marketplace is not installed, run this command internally:
 
 ```bash
 codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.2.0
+```
+
+Then separately check whether the `fuse-bead-designer` plugin is installed. Do not install a duplicate plugin. If the plugin is not installed, run this command internally:
+
+```bash
 codex plugin add fuse-bead-designer@fuse-bead-designer
 ```
 

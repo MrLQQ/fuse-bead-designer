@@ -38,10 +38,16 @@ def test_release_versions_are_synchronized():
 def test_agents_installation_contract_is_agent_owned():
     contract = Path("AGENTS.md").read_text(encoding="utf-8")
 
+    assert "Request permission before installing anything." in contract
+    assert "check whether the `fuse-bead-designer` Marketplace is already installed" in contract
+    assert "Then separately check whether the `fuse-bead-designer` plugin is installed" in contract
+    assert "If the Marketplace is not installed, run this command internally:" in contract
     assert "codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.2.0" in contract
+    assert "If the plugin is not installed, run this command internally:" in contract
     assert "codex plugin add fuse-bead-designer@fuse-bead-designer" in contract
     assert "Do not ask the user to run" in contract
     assert "new task" in contract
+    assert "On compatible non-Codex hosts, use the standalone Release Skill" in contract
 
 
 def test_documented_example_outputs_agree():
