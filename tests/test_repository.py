@@ -17,11 +17,11 @@ def test_readmes_put_natural_language_before_developer_cli():
     chinese = Path("README.md").read_text(encoding="utf-8")
     english = Path("README.en.md").read_text(encoding="utf-8")
 
-    assert "请安装并使用 https://github.com/MrLQQ/fuse-bead-designer" in chinese
+    assert "请安装这个 Codex 插件：https://github.com/MrLQQ/fuse-bead-designer" in chinese
     assert "把这张图生成拼豆设计图" in chinese
     assert chinese.index("## 开发者") < chinese.index("python ")
 
-    assert "Please install and use https://github.com/MrLQQ/fuse-bead-designer" in english
+    assert "Please install this Codex plugin: https://github.com/MrLQQ/fuse-bead-designer" in english
     assert "Turn the attached image into a fuse-bead pattern" in english
     assert english.index("## Developer") < english.index("python ")
 
@@ -63,6 +63,10 @@ def test_agents_installation_contract_is_agent_owned():
     assert "Do not ask the user to run" in contract
     assert "new task" in contract
     assert "On compatible non-Codex hosts, use the standalone Release Skill" in contract
+    assert "does not authorize cloning" in contract
+    assert "running examples" in contract
+    assert "creating virtual environments" in contract
+    assert "installing runtime dependencies" in contract
 
 
 def test_skill_owns_internal_execution_and_delivery():

@@ -1,12 +1,17 @@
 # Forward evaluation with the skill
 
-Run each scenario in a fresh context with only its raw fixture and this prompt:
+Run each pattern-generation scenario in a fresh context with only its raw fixture and this prompt:
 
 ```text
 Use $create-fuse-bead-patterns at
 plugins/fuse-bead-designer/skills/create-fuse-bead-patterns
 to solve this request: <scenario prompt>
 ```
+
+Run the installation-only scenario in a fresh context without a source fixture.
+It must stop after completing installation and reminding the user to start a
+new task; it must not clone, run examples, create a virtual environment, or
+install runtime dependencies.
 
 ## Pass rubric
 
@@ -18,6 +23,7 @@ verification state; it must not invent a brand code or hand-written counts.
 
 | Public scenario | Required evidence | Pass condition |
 | --- | --- | --- |
+| Installation-only first use | Permission-aware Marketplace and Plugin installation; stop boundary | Complete only installation, then remind the user to start a new task; do not clone, run examples, create a virtual environment, or install runtime dependencies. |
 | `examples/inputs/clean-pixel-art.png` | Classification `pixel-art`; blue cat identified; compiler artifacts | Preserve the logical pixel-art subject rather than silently collapsing it; report compiler-derived quantities. |
 | `examples/inputs/high-resolution-mascot.png` | Classification `high-resolution-image`; clean-subject handling; compiler artifacts | Preserve the red-panda librarian's identity/silhouette; state sampling uncertainty if semantic detail is simplified; report compiler-derived quantities. |
 | `examples/inputs/occluded-finished-beads.png` | Classification `finished-bead-photo`; hand/table excluded; inferred-cell evidence or stop | Do not count the hand/table; mark a small recoverable tentacle reconstruction `inferred-low`, or use `review-required`/stop if it cannot be safely recovered. |

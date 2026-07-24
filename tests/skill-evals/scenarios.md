@@ -1,5 +1,13 @@
 # Skill Evaluation Scenarios
 
+## Installation-only first use
+请安装这个 Codex 插件：https://github.com/MrLQQ/fuse-bead-designer 。请由你完成安装；安装成功后停止，不要运行示例或安装额外运行依赖，只提醒我新建任务。
+
+Expected behavior: request installation permission when needed, complete only the
+Marketplace and Plugin installation, then stop and remind the user to start a
+new task. It must not clone the repository, run examples, create a virtual
+environment, or install runtime dependencies.
+
 ## A. Existing pixel art
 Turn the supplied clean pixel-art subject into a practical fuse-bead template.
 Include a grid and exact color quantities.

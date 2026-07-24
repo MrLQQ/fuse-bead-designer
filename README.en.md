@@ -8,9 +8,9 @@ Send a finished-bead photo, object photo, or high-resolution illustration to an 
 
 ## First use: send this sentence to your Agent
 
-> Please install and use https://github.com/MrLQQ/fuse-bead-designer
+> Please install this Codex plugin: https://github.com/MrLQQ/fuse-bead-designer. Complete the installation yourself; after it succeeds, stop. Do not run examples or install additional runtime dependencies; only remind me to start a new task.
 
-Installation changes the local environment, so the Agent asks for permission once. After approval, the Agent checks and completes installation internally; you do not need to copy terminal commands. Some hosts require a new task after installation, and the Agent will say so explicitly.
+Installation changes the local environment, so the Agent asks for permission once. After approval, the Agent checks and completes installation internally; you do not need to copy terminal commands. It stops after installation; start a new task and then send the image request below.
 
 ## Everyday use: upload an image and describe the result
 
