@@ -1,0 +1,30 @@
+[
+  {
+    "id": "black",
+    "name": "Black",
+    "name_zh": "黑色",
+    "hex": "#111515",
+    "brand_code": null
+  },
+  {
+    "id": "warm-white",
+    "name": "Warm White",
+    "name_zh": "暖白",
+    "hex": "#F7F4EA",
+    "brand_code": null
+  },
+  {
+    "id": "purple",
+    "name": "Purple",
+    "name_zh": "紫色",
+    "hex": "#8E44AD",
+    "brand_code": null
+  },
+  {
+    "id": "yellow",
+    "name": "Yellow",
+    "name_zh": "黄色",
+    "hex": "#FFE000",
+    "brand_code": null
+  }
+]

@@ -1,0 +1,39 @@
+{
+  "board_decision": {
+    "alternatives": [],
+    "columns": 1,
+    "height": 29,
+    "is_custom_size": false,
+    "rows": 1,
+    "score": 0.0,
+    "width": 29
+  },
+  "classification": "pixel-art",
+  "cleanup_changes": [],
+  "inferred_cells": [],
+  "palette_decision": {
+    "color_ids": [
+      "black",
+      "charcoal",
+      "gray",
+      "warm-white",
+      "red",
+      "orange",
+      "yellow",
+      "lime",
+      "green",
+      "dark-green",
+      "turquoise",
+      "blue",
+      "purple",
+      "pink",
+      "brown",
+      "tan"
+    ],
+    "color_limit": 8,
+    "source": "generic"
+  },
+  "removed_interference": [],
+  "verification": "verified",
+  "warnings": []
+}

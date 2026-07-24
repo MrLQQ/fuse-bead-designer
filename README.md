@@ -53,14 +53,19 @@ python plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/creat
   --classification pixel-art
 ```
 
-高分辨率图可让编译器自动在 29 × 29、58 × 29、29 × 58、58 × 58 等标准板组合中选择。显式尺寸必须同时给出 `--width` 和 `--height`；超过四块板需要 `--confirm-large-board`。使用含遮挡的照片时，由 Agent 明确给出经过审查的补全坐标，例如：
+高分辨率图可让编译器自动在 29 × 29、58 × 29、29 × 58、58 × 58 等标准板组合中选择。显式尺寸必须同时给出 `--width` 和 `--height`；超过四块板需要 `--confirm-large-board`。
+
+含遮挡的照片不能直接交给编译器。Agent 应先识别主体，移除手、桌面和画板等干扰，生成干净中间图；遮挡无法可靠还原时必须使用 `review-required`。仓库中的公开示例保留了原始照片和清理后的中间图：
 
 ```bash
 python plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/create_pattern.py \
-  --input examples/inputs/occluded-finished-beads.png \
+  --input examples/intermediates/occluded-finished-beads-clean.png \
   --output-dir work/occluded-pattern \
-  --verification inferred-low --inferred-cells 12,8 13,8 \
-  --classification finished-bead-photo
+  --width 58 --height 58 \
+  --palette examples/palettes/octopus-generic.json \
+  --verification review-required \
+  --classification finished-bead-photo \
+  --removed-interference hand fingers wooden-table transparent-pegboard pegs glare shadows background
 ```
 
 ## 输出

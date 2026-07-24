@@ -51,14 +51,19 @@ python plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/creat
   --classification pixel-art
 ```
 
-Automatic sizing considers standard 29 × 29, 58 × 29, 29 × 58, and 58 × 58 layouts. Explicit `--width` and `--height` must be paired; layouts over four boards require `--confirm-large-board`. For an occluded photo, an Agent supplies reviewed inferred cells:
+Automatic sizing considers standard 29 × 29, 58 × 29, 29 × 58, and 58 × 58 layouts. Explicit `--width` and `--height` must be paired; layouts over four boards require `--confirm-large-board`.
+
+Do not send an occluded photo directly to the compiler. An Agent first identifies the subject and removes the hand, table, pegboard, and other interference. If reconstruction cannot be verified, it must remain `review-required`. The public example keeps both the raw photo and its cleaned intermediate:
 
 ```bash
 python plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/create_pattern.py \
-  --input examples/inputs/occluded-finished-beads.png \
+  --input examples/intermediates/occluded-finished-beads-clean.png \
   --output-dir work/occluded-pattern \
-  --verification inferred-low --inferred-cells 12,8 13,8 \
-  --classification finished-bead-photo
+  --width 58 --height 58 \
+  --palette examples/palettes/octopus-generic.json \
+  --verification review-required \
+  --classification finished-bead-photo \
+  --removed-interference hand fingers wooden-table transparent-pegboard pegs glare shadows background
 ```
 
 ## Outputs

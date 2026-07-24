@@ -24,7 +24,14 @@ verification state; it must not invent a brand code or hand-written counts.
 
 ## Evidence record
 
-Status: pending one independent final forward check. For each scenario, retain
-the agent response plus `pattern.json`, `colors.csv`, and `report.json`; when
-applicable retain `review.png`. Record pass/fail against the rubric, not a
-plausible-looking hand-written grid.
+Final forward check:
+
+| Scenario | Result | Evidence |
+| --- | --- | --- |
+| Clean pixel art | PASS | `examples/outputs/clean-pixel-art/`; `pixel-art`, `verified`, 333 compiler-counted beads. |
+| High-resolution mascot | PASS | `examples/outputs/high-resolution-mascot/`; `high-resolution-image`, `verified`, 1234 compiler-counted beads. |
+| Occluded finished beads | PASS with required review | Raw photo retained in `examples/inputs/`; semantic cleanup retained in `examples/intermediates/`; hand, table, pegboard, glare, shadows, and background are recorded as removed. `review-required` keeps the 1525-bead result explicitly provisional. |
+
+For every output, `pattern.json.total_beads`, the sum of
+`pattern.json.color_counts`, and the sum of `colors.csv` counts agree. No
+example contains an inferred brand code.

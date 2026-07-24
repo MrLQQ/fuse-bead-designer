@@ -1,0 +1,17 @@
+id,name,name_zh,hex,brand_code,count
+black,Black,黑色,#111515,,0
+charcoal,Charcoal,炭黑,#273033,,94
+gray,Gray,灰色,#596564,,30
+warm-white,Warm White,暖白,#F7F4EA,,11
+red,Red,红色,#E53935,,0
+orange,Orange,橙色,#FB8C00,,0
+yellow,Yellow,黄色,#FFE000,,0
+lime,Lime,荧光绿,#69E51C,,0
+green,Green,绿色,#00B66A,,0
+dark-green,Dark Green,深绿,#087A52,,0
+turquoise,Turquoise,青绿,#00CFC1,,0
+blue,Blue,蓝色,#2684FF,,192
+purple,Purple,紫色,#8E44AD,,0
+pink,Pink,粉色,#FF6FAE,,6
+brown,Brown,棕色,#76503A,,0
+tan,Tan,浅棕,#C49A6C,,0

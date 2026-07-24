@@ -1,0 +1,16 @@
+Use case: semantic-cleanup-intermediate
+Source: examples/inputs/occluded-finished-beads.png
+Output: examples/intermediates/occluded-finished-beads-clean.png
+
+Isolate only the purple octopus fuse-bead artwork, preserving its front-facing
+proportions, bead-grid geometry, colors, face, and tentacle shapes. Remove the
+human hand and fingers, wooden table, transparent pegboard, pegs, glare,
+shadows, and all background objects. Conservatively reconstruct only the small
+portion of the upper-right tentacle hidden by the hand, following the visible
+continuous bead structure. Do not redesign or add details. Center the complete
+subject on pure white with generous margin. Do not add grid lines, legends,
+text, counts, borders, or UI.
+
+The intermediate is not the count source. The deterministic compiler produces
+the grid and quantities. Because the hidden cells cannot be independently
+verified from the raw photo, the public example remains `review-required`.
