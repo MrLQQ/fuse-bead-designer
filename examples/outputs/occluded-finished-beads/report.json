@@ -1,0 +1,99 @@
+{
+  "board_decision": {
+    "alternatives": [],
+    "columns": 2,
+    "height": 58,
+    "is_custom_size": false,
+    "rows": 2,
+    "score": 0.0,
+    "width": 58
+  },
+  "classification": "finished-bead-photo",
+  "cleanup_changes": [
+    [
+      22,
+      13
+    ],
+    [
+      30,
+      13
+    ],
+    [
+      24,
+      15
+    ],
+    [
+      23,
+      16
+    ],
+    [
+      13,
+      29
+    ],
+    [
+      40,
+      34
+    ],
+    [
+      30,
+      36
+    ],
+    [
+      34,
+      36
+    ],
+    [
+      35,
+      42
+    ],
+    [
+      35,
+      44
+    ]
+  ],
+  "inferred_cells": [
+    [
+      45,
+      24
+    ],
+    [
+      46,
+      24
+    ],
+    [
+      45,
+      25
+    ],
+    [
+      46,
+      25
+    ]
+  ],
+  "palette_decision": {
+    "color_ids": [
+      "black",
+      "charcoal",
+      "gray",
+      "warm-white",
+      "red",
+      "orange",
+      "yellow",
+      "lime",
+      "green",
+      "dark-green",
+      "turquoise",
+      "blue",
+      "purple",
+      "pink",
+      "brown",
+      "tan"
+    ],
+    "color_limit": 8,
+    "source": "generic"
+  },
+  "removed_interference": [],
+  "verification": "review-required",
+  "warnings": [
+    "Quantities are provisional until review is confirmed."
+  ]
+}

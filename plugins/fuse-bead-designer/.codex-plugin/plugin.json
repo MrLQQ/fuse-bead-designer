@@ -1,18 +1,31 @@
 {
   "name": "fuse-bead-designer",
   "version": "0.1.0",
-  "description": "Fuse Bead Designer plugin",
+  "description": "Create reviewable, count-accurate fuse-bead templates from reference images.",
   "author": {
-    "name": "Local developer"
+    "name": "MrLQQ",
+    "url": "https://github.com/MrLQQ"
   },
+  "repository": "https://github.com/MrLQQ/fuse-bead-designer",
+  "homepage": "https://github.com/MrLQQ/fuse-bead-designer#readme",
+  "license": "MIT",
+  "keywords": ["fuse-beads", "pixel-art", "craft-patterns", "agent-skill"],
   "skills": "./skills/",
   "interface": {
     "displayName": "Fuse Bead Designer",
-    "shortDescription": "Use Fuse Bead Designer in Codex.",
-    "longDescription": "Fuse Bead Designer adds a local Codex plugin scaffold.",
-    "developerName": "Local developer",
-    "category": "Productivity",
-    "capabilities": [],
-    "defaultPrompt": "Help me use Fuse Bead Designer."
+    "shortDescription": "Create count-accurate fuse-bead templates",
+    "longDescription": "Convert finished bead photos, pixel art, and high-resolution images into reviewable templates with deterministic grids and exact color quantities.",
+    "developerName": "MrLQQ",
+    "category": "Creativity",
+    "capabilities": ["Image Understanding", "Pattern Generation"],
+    "websiteURL": "https://github.com/MrLQQ/fuse-bead-designer",
+    "defaultPrompt": [
+      "Turn this image into a practical fuse-bead template.",
+      "Convert this finished bead photo into a count-accurate pattern."
+    ],
+    "brandColor": "#16A085",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png",
+    "screenshots": ["./assets/screenshot-template.png"]
   }
 }
