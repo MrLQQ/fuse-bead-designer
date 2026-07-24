@@ -13,6 +13,19 @@ def test_chinese_readme_is_primary():
     assert "安装" in chinese
 
 
+def test_readmes_put_natural_language_before_developer_cli():
+    chinese = Path("README.md").read_text(encoding="utf-8")
+    english = Path("README.en.md").read_text(encoding="utf-8")
+
+    assert "请安装并使用 https://github.com/MrLQQ/fuse-bead-designer" in chinese
+    assert "把这张图生成拼豆设计图" in chinese
+    assert chinese.index("## 开发者") < chinese.index("python ")
+
+    assert "Please install and use https://github.com/MrLQQ/fuse-bead-designer" in english
+    assert "Turn the attached image into a fuse-bead pattern" in english
+    assert english.index("## Developer") < english.index("python ")
+
+
 def test_marketplace_points_to_plugin():
     data = json.loads(Path(".agents/plugins/marketplace.json").read_text(encoding="utf-8"))
     entry = next(item for item in data["plugins"] if item["name"] == "fuse-bead-designer")

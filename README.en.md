@@ -2,58 +2,144 @@
 
 # Fuse Bead Designer
 
-Turn reference images into reviewable fuse-bead patterns. A deterministic compiler derives the grid, counts, and report from one canonical `pattern.json`.
+Send a finished-bead photo, object photo, or high-resolution illustration to an Agent and receive a buildable grid, per-color quantities, and a reviewable report. The Agent identifies and cleans the subject; a deterministic compiler derives the grid and counts from the same `pattern.json` instead of guessing from a rendered image.
 
-![Real template example](plugins/fuse-bead-designer/assets/screenshot-template.png)
+![Modern fuse-bead template](plugins/fuse-bead-designer/assets/screenshot-template.png)
 
-## Why this project exists
+## First use: send this sentence to your Agent
 
-Finished-bead photos, pixel art, and illustrations can contain backgrounds, shadows, occlusion, and continuous colors. This project separates semantic image work from deterministic compilation: an Agent prepares a clean subject, then the local Python/Pillow compiler produces count-consistent artifacts.
+> Please install and use https://github.com/MrLQQ/fuse-bead-designer
 
-## Supported inputs and uncertainty boundary
+Installation changes the local environment, so the Agent asks for permission once. After approval, the Agent checks and completes installation internally; you do not need to copy terminal commands. Some hosts require a new task after installation, and the Agent will say so explicitly.
 
-Supported inputs are clean pixel art, high-resolution subject images, and finished fuse-bead photos. The compiler consumes a cleaned subject; it does not reliably solve complex semantics, severe perspective, or large occlusions by itself.
+## Everyday use: upload an image and describe the result
 
-An Agent must mark small, explainable reconstruction with coordinates and a `review.png`. `verified` means no semantic reconstruction affected the subject; `inferred-low` means limited reconstruction; `review-required` means a key region is uncertain. Counts in `review-required` are provisional, not confirmed material quantities. Brand codes are never invented: `brand_code` is retained only when supplied in your palette.
+Attach the source image in an image-capable Agent conversation, then send:
 
-## Quick start: Codex Plugin
+> Turn the attached image into a fuse-bead pattern
+
+You can add natural constraints such as “prefer standard 29 × 29 boards,” “preserve white beads,” or “do not guess behind this occlusion; mark it for my review.” The normal flow does not expose a Skill token or require local commands.
+
+## From source image to buildable pattern
+
+All four rows below use real repository inputs and deterministic compiler output. They are not illustrative mockups.
+
+<table>
+  <tr>
+    <th>Scenario</th>
+    <th>Source</th>
+    <th>Fuse-bead template</th>
+    <th>Result</th>
+  </tr>
+  <tr>
+    <td><strong>Occluded finished beads</strong><br>Fingers, board, and scene interference</td>
+    <td><img src="examples/inputs/occluded-finished-beads.png" alt="Occluded finished-bead source" width="260"></td>
+    <td><img src="examples/outputs/occluded-finished-beads/template.png" alt="Occluded finished-bead template" width="360"></td>
+    <td>58 × 58<br>1,525 beads<br><code>review-required</code></td>
+  </tr>
+  <tr>
+    <td><strong>Occluded high-resolution image</strong><br>A label hides part of the subject</td>
+    <td><img src="examples/inputs/occluded-high-resolution-image.png" alt="Occluded high-resolution source" width="260"></td>
+    <td><img src="examples/outputs/occluded-high-resolution-image/template.png" alt="Occluded high-resolution template" width="360"></td>
+    <td>58 × 58<br>719 beads<br><code>review-required</code></td>
+  </tr>
+  <tr>
+    <td><strong>Actual object photo</strong><br>Subject extracted from a studio background</td>
+    <td><img src="examples/inputs/actual-object-photo.png" alt="Actual object source photo" width="260"></td>
+    <td><img src="examples/outputs/actual-object-photo/template.png" alt="Actual object fuse-bead template" width="360"></td>
+    <td>58 × 29<br>501 beads<br><code>verified</code></td>
+  </tr>
+  <tr>
+    <td><strong>High-resolution non-pixel illustration</strong><br>Continuous color reduced to a discrete grid</td>
+    <td><img src="examples/inputs/high-resolution-mascot.png" alt="High-resolution non-pixel source" width="260"></td>
+    <td><img src="examples/outputs/high-resolution-mascot/template.png" alt="High-resolution mascot fuse-bead template" width="360"></td>
+    <td>58 × 58<br>1,234 beads<br><code>verified</code></td>
+  </tr>
+</table>
+
+## What you receive
+
+Each generation delivers:
+
+- `template.png`: buildable coordinates, five-cell guides, standard-board boundaries, and a modern quantity legend.
+- `colors.csv`: colors actually used, hex values, optional supplied brand codes, and exact counts.
+- `pattern.json`: the canonical grid, palette, board layout, and per-color counts.
+- `report.json`: input classification, cleanup record, sizing decision, warnings, and verification state.
+- `review.png`: focused uncertainty markers when cleanup or inferred regions need review.
+
+Verification states are operational:
+
+- `verified`: no semantic reconstruction affected the subject; counts belong to the confirmed design.
+- `inferred-low`: only limited, explainable reconstruction was used; inspect the markers.
+- `review-required`: a key region remains uncertain. Counts are provisional; inspect `review.png` and `report.json` before buying beads or building.
+
+“Exact counts” means deterministic totals for a fixed input, grid, and palette. It is not a claim that an ambiguous photo, unknown occlusion, or physical inventory is objectively correct.
+
+## Supported sources and automatic decisions
+
+The Skill handles general inputs, not only pre-pixelated art:
+
+- Finished-bead photos: distinguish the bead subject from fingers, tables, transparent boards, glare, and shadows.
+- Occluded photos or illustrations: reconstruct only explainable regions; unresolved key content stays review-required.
+- Actual object photos: isolate the subject from its photographic background while preserving subject details such as white areas.
+- High-resolution non-pixel images: simplify contours and continuous colors so one cell maps to one bead.
+- Clean pixel art: preserve proportions and hard edges where possible.
+
+The standard module is 29 × 29. The Agent chooses common combinations such as 29 × 29, 58 × 29, 29 × 58, or 58 × 58 from the subject proportions, or follows a natural-language request for a custom size. It asks before exceeding four boards. The default palette is generic and never invents brand codes; `brand_code` is retained only when you supply a brand palette.
+
+## Codex and other Agent hosts
+
+Codex installs the full Plugin where possible. Other [Agent Skills](https://agentskills.io/)-compatible tools can install the standalone Skill from the Release. Installation locations, permission models, image understanding, and image editing capabilities vary by host, so the same natural-language request can trigger different internal steps.
+
+For normal users, the boundary remains the same: send the installation prompt and an image request. The Agent obtains installation permission and performs supported installation itself. If the host lacks a required image capability, it should explain the limitation and ask for a better source instead of inventing subject detail or hidden regions.
+
+## Developer
+
+> The commands below are only for Agent implementers, maintainers, and developers debugging the compiler. Normal users should not run them; use the natural-language workflow above.
+
+### Codex Marketplace / Plugin
+
+Install the fixed v0.2.0 release:
+
+```bash
+codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.2.0
+codex plugin add fuse-bead-designer@fuse-bead-designer
+```
+
+Debug from a local clone:
 
 ```bash
 git clone https://github.com/MrLQQ/fuse-bead-designer.git
 cd fuse-bead-designer
 codex plugin marketplace add "$PWD"
-codex plugin add fuse-bead-designer@personal
+codex plugin add fuse-bead-designer@fuse-bead-designer
 ```
 
-In an image-capable Codex conversation, invoke `$create-fuse-bead-patterns` to prepare a clean, front-facing subject, then run the local compiler below. Without image capability, stop for user review when the subject or an occlusion is unresolved.
-
-## Standalone Agent Skill installation
+### Standalone Skill
 
 ```bash
 cp -R plugins/fuse-bead-designer/skills/create-fuse-bead-patterns \
   "${CODEX_HOME:-$HOME/.codex}/skills/"
 ```
 
-## Other Agent Skills-compatible tools
-
-Any tool supporting the [Agent Skills](https://agentskills.io/) format can use `plugins/fuse-bead-designer/skills/create-fuse-bead-patterns`. Its skills directory, activation method, and image-tool support are host-specific. This Skill does not replace host image understanding or editing.
-
-## Usage examples
-
-Install the dependencies, then compile the public pixel-art fixture to one 29 × 29 board:
+### Local development, tests, and packaging
 
 ```bash
 python -m pip install -e ".[test]"
-python plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/create_pattern.py \
-  --input examples/inputs/clean-pixel-art.png \
-  --output-dir work/cat-pattern \
-  --width 29 --height 29 \
-  --classification pixel-art
+pytest -q
+python tools/package_release.py
 ```
 
-Automatic sizing considers standard 29 × 29, 58 × 29, 29 × 58, and 58 × 58 layouts. Explicit `--width` and `--height` must be paired; layouts over four boards require `--confirm-large-board`.
+v0.2.0 packaging writes:
 
-Do not send an occluded photo directly to the compiler. An Agent first identifies the subject and removes the hand, table, pegboard, and other interference. If reconstruction cannot be verified, it must remain `review-required`. The public example keeps both the raw photo and its cleaned intermediate:
+```text
+dist/fuse-bead-designer-plugin-v0.2.0.zip
+dist/create-fuse-bead-patterns-skill-v0.2.0.zip
+```
+
+### Direct deterministic compiler use
+
+The Agent normally calls the compiler internally. Run it directly only for debugging:
 
 ```bash
 python plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/create_pattern.py \
@@ -66,53 +152,12 @@ python plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/creat
   --removed-interference hand fingers wooden-table transparent-pegboard pegs glare shadows background
 ```
 
-## Outputs
-
-- `pattern.json`: canonical grid, palette, counts, board layout, and uncertainty state.
-- `template.png`: buildable coordinate grid, five-cell guides, standard-board edges, and legend.
-- `colors.csv`: `id,name,name_zh,hex,brand_code,count` with exact counts.
-- `report.json`: classification, cleanup, board/palette decisions, warnings, and verification state.
-- `review.png`: emitted only when inferred cells or cleanup markers exist.
-
-`total_beads` equals the sum of `color_counts`. A non-empty output directory is refused unless `--force` is explicit.
-
-## Board sizing
-
-The standard module is 29 × 29. Selection balances cropping, unused area, silhouette retention, and bead count. Custom dimensions are allowed but clearly marked as not matching standard boards. Ask before finalizing a design over four boards.
-
-## Generic and brand palettes
-
-Without `--palette`, the compiler uses the bundled 16-color generic JSON palette. You may pass a JSON array with `id`, `name`, `name_zh`, `hex`, and optional `brand_code`, or a CSV with this exact header:
-
-```text
-id,name,name_zh,hex,brand_code
-```
-
-Only supplied palette colors are used. The default is 8–16 colors with dithering disabled. Brand names and codes must come from you.
-
-## Known limitations
-
-“Count-accurate” means deterministic counts for a fixed input, grid, and palette; it is not a guarantee that an ambiguous photo, an occluded region, or real-world inventory is objectively correct. Empty cells and white beads are distinct, but a bad subject mask still affects output. Review `review.png`, `report.json`, and physical inventory before building. This project does not guarantee ironing, material safety, or finished-work quality.
-
-## Development and tests
-
-```bash
-python -m pip install -e ".[test]"
-pytest -q
-python tools/package_release.py
-```
-
-Packaging writes two deterministic archives:
-
-```text
-dist/fuse-bead-designer-plugin-v0.1.0.zip
-dist/create-fuse-bead-patterns-skill-v0.1.0.zip
-```
+Explicit sizing requires both width and height. More than four boards requires explicit confirmation. The compiler refuses a non-empty output directory unless a developer deliberately uses its force option. Custom palettes may be JSON entries with `id`, `name`, `name_zh`, `hex`, and optional `brand_code`, or a CSV with the exact header `id,name,name_zh,hex,brand_code`.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Run tests before submitting changes. Public examples must be redistributable; never commit user images, credentials, or private `work/` intermediates.
+See [CONTRIBUTING.md](CONTRIBUTING.md). Public examples must be redistributable. Never commit user images, credentials, or private intermediates from `work/`.
 
 ## License
 
-[MIT](LICENSE) © 2026 MrLQQ。
+[MIT](LICENSE) © 2026 MrLQQ.
