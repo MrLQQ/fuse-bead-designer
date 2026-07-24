@@ -16,6 +16,7 @@
 - The compiler remains the sole source of truth for cells and quantities.
 - Chinese documentation is primary; English documentation is the fallback.
 - Release version is `0.2.0`.
+- README must show four real source-to-template examples: occluded finished beads, an occluded high-resolution image, an actual object photo, and a high-resolution non-pixel illustration.
 
 ---
 
@@ -206,7 +207,121 @@ git add plugins/fuse-bead-designer/skills/create-fuse-bead-patterns \
 git commit -m "feat: make bead generation natural-language first"
 ```
 
-### Task 3: User-first README and developer-only CLI
+### Task 3: Public transformation gallery
+
+**Files:**
+- Create: `examples/inputs/occluded-high-resolution-image.png`
+- Create: `examples/intermediates/occluded-high-resolution-image-clean.png`
+- Create: `examples/outputs/occluded-high-resolution-image/*`
+- Create: `examples/inputs/actual-object-photo.png`
+- Create: `examples/intermediates/actual-object-photo-clean.png`
+- Create: `examples/outputs/actual-object-photo/*`
+- Create: `examples/prompts/occluded-high-resolution-image.txt`
+- Create: `examples/prompts/actual-object-photo.txt`
+- Modify: `tests/test_repository.py`
+
+**Interfaces:**
+- Consumes: the existing deterministic compiler and generic palette.
+- Produces: two new openly distributable source-to-template examples, complementing the existing occluded finished-bead and high-resolution mascot examples.
+
+- [ ] **Step 1: Add failing gallery integrity tests**
+
+Add:
+
+```python
+def test_public_gallery_has_four_real_compiler_examples():
+    examples = (
+        "occluded-finished-beads",
+        "occluded-high-resolution-image",
+        "actual-object-photo",
+        "high-resolution-mascot",
+    )
+    for name in examples:
+        assert Path(f"examples/inputs/{name}.png").is_file()
+        output = Path("examples/outputs") / name
+        for artifact in ("pattern.json", "template.png", "colors.csv", "report.json"):
+            assert (output / artifact).is_file()
+
+
+def test_gallery_counts_are_compiler_consistent():
+    for name in ("occluded-high-resolution-image", "actual-object-photo"):
+        output = Path("examples/outputs") / name
+        pattern = json.loads((output / "pattern.json").read_text(encoding="utf-8"))
+        assert pattern["total_beads"] == sum(pattern["color_counts"].values())
+```
+
+- [ ] **Step 2: Run the focused gallery tests and verify failure**
+
+Run:
+
+```bash
+.venv/bin/pytest tests/test_repository.py -k gallery -q
+```
+
+Expected: failure because both new public examples are absent.
+
+- [ ] **Step 3: Generate openly distributable source fixtures**
+
+Use the repository's image-generation workflow and retain the exact prompts:
+
+- `occluded-high-resolution-image.png`: an original clean high-resolution illustration of a yellow songbird on a branch, with a plain background and a foreground paper label hiding a small non-identity-defining tail area.
+- `actual-object-photo.png`: an original studio product photo of one red canvas sneaker on a plain warm-white background, with a clear silhouette, no text, logo, person, or extra object.
+
+Do not use third-party or user imagery. Record source and semantic-cleanup prompts in `examples/prompts/`.
+
+- [ ] **Step 4: Create clean semantic intermediates**
+
+Use image editing to:
+
+- remove the paper label and conservatively restore the songbird tail; mark its final compilation `review-required`;
+- flatten the sneaker background and preserve the real silhouette, laces, sole, and principal color blocks; mark its final compilation `verified` only if no subject reconstruction occurs.
+
+Do not ask the image model to draw grids, legends, counts, or the final template.
+
+- [ ] **Step 5: Compile the two new examples**
+
+Run the bundled compiler internally:
+
+```bash
+.venv/bin/python \
+  plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/create_pattern.py \
+  --input examples/intermediates/occluded-high-resolution-image-clean.png \
+  --output-dir examples/outputs/occluded-high-resolution-image \
+  --width 58 --height 58 \
+  --classification high-resolution-image \
+  --verification review-required \
+  --removed-interference foreground-paper-label background
+```
+
+```bash
+.venv/bin/python \
+  plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/create_pattern.py \
+  --input examples/intermediates/actual-object-photo-clean.png \
+  --output-dir examples/outputs/actual-object-photo \
+  --width 58 --height 29 \
+  --classification high-resolution-image \
+  --verification verified \
+  --removed-interference studio-background
+```
+
+- [ ] **Step 6: Run focused integrity tests and inspect both templates**
+
+Run:
+
+```bash
+.venv/bin/pytest tests/test_repository.py -k gallery -q
+```
+
+Expected: all gallery tests pass. Visually confirm that neither foreground label nor studio background appears as beads and the subjects remain recognizable.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add examples tests/test_repository.py
+git commit -m "docs: add public source-to-template gallery"
+```
+
+### Task 4: User-first README and developer-only CLI
 
 **Files:**
 - Modify: `README.md`
@@ -252,10 +367,12 @@ Use this order in Chinese and English:
 1. value proposition and screenshot;
 2. “send this to your Agent” first-install prompt;
 3. “upload an image and say this” daily-use prompt;
-4. delivered files and uncertainty states;
-5. supported input types and board/palette behavior;
-6. Codex/other-Agent installation boundary;
-7. developer section containing Marketplace, Python, testing, packaging, and direct compiler commands.
+4. a four-row source-to-template gallery covering occluded finished beads, occluded high-resolution imagery, an actual object photo, and a high-resolution non-pixel illustration;
+5. board size, total bead count, and verification state for every gallery row, read from each example's compiler artifacts;
+6. delivered files and uncertainty states;
+7. supported input types and board/palette behavior;
+8. Codex/other-Agent installation boundary;
+9. developer section containing Marketplace, Python, testing, packaging, and direct compiler commands.
 
 Explicitly say the displayed commands are for Agent implementers/developers and normal users should not run them.
 
@@ -276,7 +393,7 @@ git add README.md README.en.md tests/test_repository.py
 git commit -m "docs: make agent prompts the primary workflow"
 ```
 
-### Task 4: v0.2.0 packaging and release readiness
+### Task 5: v0.2.0 packaging and release readiness
 
 **Files:**
 - Modify: `tools/package_release.py`
@@ -284,7 +401,7 @@ git commit -m "docs: make agent prompts the primary workflow"
 - Modify: `plugins/fuse-bead-designer/.codex-plugin/plugin.json` only if validation requires a manifest correction.
 
 **Interfaces:**
-- Consumes: the v0.2.0 Plugin and Skill produced by Tasks 1–3.
+- Consumes: the v0.2.0 Plugin, Skill, gallery, and documentation produced by Tasks 1–4.
 - Produces: deterministic `v0.2.0` Plugin and standalone Skill archives plus a release-ready branch.
 
 - [ ] **Step 1: Add a failing package-version test**
