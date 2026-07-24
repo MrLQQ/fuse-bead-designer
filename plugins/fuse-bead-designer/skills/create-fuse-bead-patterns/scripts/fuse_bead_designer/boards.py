@@ -34,6 +34,29 @@ class BoardSelection:
         return self.board_columns * self.board_rows
 
 
+@dataclass(frozen=True)
+class BoardLayout:
+    pattern_width: int
+    pattern_height: int
+    module_size: int
+    board_columns: int
+    board_rows: int
+
+
+def layout_boards(width: int, height: int, module_size: int = MODULE_SIZE) -> BoardLayout:
+    """Derive physical-board coverage without resizing the logical pattern."""
+    _validate_positive_integer(width, "width")
+    _validate_positive_integer(height, "height")
+    _validate_positive_integer(module_size, "module_size")
+    return BoardLayout(
+        pattern_width=width,
+        pattern_height=height,
+        module_size=module_size,
+        board_columns=(width + module_size - 1) // module_size,
+        board_rows=(height + module_size - 1) // module_size,
+    )
+
+
 def select_board(
     subject_width: Real,
     subject_height: Real,
@@ -41,11 +64,27 @@ def select_board(
     explicit_size: tuple[int, int] | None = None,
     max_boards: int = 4,
 ) -> BoardSelection:
-    """Select the lowest-scoring standard board arrangement.
+    """Deprecated compatibility wrapper for legacy standard-board selection.
 
     ``max_boards`` limits automatic candidates.  An explicit grid size always
     takes precedence and is therefore not constrained by that preference.
     """
+    return _select_legacy_board(
+        subject_width=subject_width,
+        subject_height=subject_height,
+        detail_score=detail_score,
+        explicit_size=explicit_size,
+        max_boards=max_boards,
+    )
+
+
+def _select_legacy_board(
+    subject_width: Real,
+    subject_height: Real,
+    detail_score: Real,
+    explicit_size: tuple[int, int] | None,
+    max_boards: int,
+) -> BoardSelection:
     _validate_positive_finite_number(subject_width, "subject_width")
     _validate_positive_finite_number(subject_height, "subject_height")
     _validate_nonnegative_finite_number(detail_score, "detail_score")
@@ -53,8 +92,9 @@ def select_board(
 
     if explicit_size is not None:
         width, height = _validate_explicit_size(explicit_size)
-        board_columns = _board_modules(width)
-        board_rows = _board_modules(height)
+        layout = layout_boards(width, height)
+        board_columns = layout.board_columns
+        board_rows = layout.board_rows
         board_count = board_columns * board_rows
         return BoardSelection(
             width=width,
@@ -122,10 +162,6 @@ def _candidate_score(
     detail_penalty = max(0.0, detail_score - min(width, height) / 58)
     board_penalty = 0.08 * max(0, board_count - 1)
     return aspect_loss + detail_penalty + board_penalty
-
-
-def _board_modules(size: int) -> int:
-    return math.ceil(size / MODULE_SIZE)
 
 
 def _validate_explicit_size(explicit_size: tuple[int, int]) -> tuple[int, int]:

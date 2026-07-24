@@ -51,11 +51,13 @@ class Pattern:
             raise ValueError("verification must be a VerificationState")
         if not isinstance(self.settings, dict):
             raise ValueError("settings must be an object")
-        if not self.is_custom_size and (
-            self.width != 29 * self.board_columns
-            or self.height != 29 * self.board_rows
+        expected_board_columns = (self.width + self.module_size - 1) // self.module_size
+        expected_board_rows = (self.height + self.module_size - 1) // self.module_size
+        if (
+            self.board_columns != expected_board_columns
+            or self.board_rows != expected_board_rows
         ):
-            raise ValueError("standard board layout dimensions do not match 29-module layout")
+            raise ValueError("board layout dimensions do not match module-size coverage")
         if not isinstance(self.cells, list):
             raise ValueError("cells must be a list of rows")
         if any(not isinstance(row, list) for row in self.cells):

@@ -3,7 +3,14 @@ import sys
 
 import pytest
 
-from fuse_bead_designer.boards import STANDARD_CANDIDATES, select_board
+from fuse_bead_designer.boards import (
+    STANDARD_CANDIDATES,
+    BoardLayout,
+    layout_boards,
+    select_board,
+)
+from fuse_bead_designer.models import Pattern, VerificationState
+from fuse_bead_designer.render import BOARD_GRID, GRID_LEFT, GRID_TOP, render_template
 
 
 REQUIRED_STANDARD_CANDIDATES = (
@@ -139,3 +146,54 @@ def test_extreme_finite_subject_dimensions_select_a_finite_score(
 
     assert (selected.width, selected.height) == expected_dimensions
     assert math.isfinite(selected.score)
+
+
+def test_layout_boards_preserves_nonstandard_pattern_dimensions():
+    layout = layout_boards(68, 60)
+
+    assert layout == BoardLayout(
+        pattern_width=68,
+        pattern_height=60,
+        module_size=29,
+        board_columns=3,
+        board_rows=3,
+    )
+
+
+def test_partial_board_pattern_validates_against_derived_layout():
+    layout = layout_boards(68, 60)
+    pattern = Pattern(
+        width=layout.pattern_width,
+        height=layout.pattern_height,
+        module_size=layout.module_size,
+        palette=[],
+        cells=[[None] * layout.pattern_width for _ in range(layout.pattern_height)],
+        verification=VerificationState.VERIFIED,
+        board_columns=layout.board_columns,
+        board_rows=layout.board_rows,
+        is_custom_size=True,
+    )
+
+    pattern.validate()
+
+
+def test_custom_partial_board_pattern_renders_all_internal_module_seams():
+    layout = layout_boards(68, 60)
+    pattern = Pattern(
+        width=layout.pattern_width,
+        height=layout.pattern_height,
+        module_size=layout.module_size,
+        palette=[],
+        cells=[[None] * layout.pattern_width for _ in range(layout.pattern_height)],
+        verification=VerificationState.VERIFIED,
+        board_columns=layout.board_columns,
+        board_rows=layout.board_rows,
+        is_custom_size=True,
+    )
+
+    image = render_template(pattern, cell_size=4)
+
+    for column in (29, 58):
+        assert image.getpixel((GRID_LEFT + column * 4, GRID_TOP + 1))[:3] == BOARD_GRID
+    for row in (29, 58):
+        assert image.getpixel((GRID_LEFT + 1, GRID_TOP + row * 4))[:3] == BOARD_GRID

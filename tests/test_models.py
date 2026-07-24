@@ -108,9 +108,9 @@ def test_pattern_rejects_non_positive_board_layout(board_columns, board_rows):
 
 @pytest.mark.parametrize(
     ("width", "height", "board_columns", "board_rows"),
-    [(28, 29, 1, 1), (29, 28, 1, 1), (58, 29, 1, 1), (29, 58, 1, 1)],
+    [(28, 29, 2, 1), (29, 28, 1, 2), (58, 29, 1, 1), (29, 58, 1, 1)],
 )
-def test_standard_pattern_requires_matching_29_module_board_layout(
+def test_pattern_requires_board_layout_to_match_module_size_coverage(
     width, height, board_columns, board_rows
 ):
     pattern = valid_pattern(
@@ -122,7 +122,7 @@ def test_standard_pattern_requires_matching_29_module_board_layout(
         cells=[[None] * width for _ in range(height)],
     )
 
-    with pytest.raises(ValueError, match="standard board layout dimensions"):
+    with pytest.raises(ValueError, match="board layout dimensions"):
         pattern.validate()
 
 

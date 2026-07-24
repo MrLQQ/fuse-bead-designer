@@ -102,13 +102,12 @@ def _draw_grid(draw: ImageDraw.ImageDraw, pattern: Pattern, cell_size: int) -> N
         y = GRID_TOP + row * cell_size
         color = FIVE_CELL_GRID if row % 5 == 0 else CELL_GRID
         draw.line((GRID_LEFT, y, right, y), fill=color, width=1)
-    if not pattern.is_custom_size:
-        for column in range(0, pattern.width + 1, 29):
-            x = GRID_LEFT + column * cell_size
-            draw.line((x, GRID_TOP, x, bottom), fill=BOARD_GRID, width=2)
-        for row in range(0, pattern.height + 1, 29):
-            y = GRID_TOP + row * cell_size
-            draw.line((GRID_LEFT, y, right, y), fill=BOARD_GRID, width=2)
+    for column in range(0, pattern.width + 1, pattern.module_size):
+        x = GRID_LEFT + column * cell_size
+        draw.line((x, GRID_TOP, x, bottom), fill=BOARD_GRID, width=2)
+    for row in range(0, pattern.height + 1, pattern.module_size):
+        y = GRID_TOP + row * cell_size
+        draw.line((GRID_LEFT, y, right, y), fill=BOARD_GRID, width=2)
 
 
 def _draw_labels(
