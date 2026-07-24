@@ -34,6 +34,11 @@ def test_v03_readmes_define_the_pattern_first_contract():
     chinese = Path("README.md").read_text(encoding="utf-8")
     english = Path("README.en.md").read_text(encoding="utf-8")
 
+    assert "## v0.3.0 图案优先流程" in chinese
+    assert "v0.3.0 把“理解图片”和“生成可计数图纸”明确分开" in chinese
+    assert "## The v0.3.0 pattern-first flow" in english
+    assert "v0.3.0 deliberately separates understanding an image" in english
+
     for phrase in (
         "三条输入路线",
         "拼豆成品照",

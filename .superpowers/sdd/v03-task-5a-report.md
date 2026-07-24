@@ -31,3 +31,11 @@ reverting those edits.
   `v0.2.0` text remains only in historical design/plan documents outside this
   task's scope.
 - `git diff --check` reported no whitespace errors.
+
+## Follow-up: exact release label consistency
+
+Review found four public README labels using bare `v0.3`: the pattern-first
+heading and opening sentence in each language. A focused contract assertion for
+the exact `v0.3.0` headings and opening copy first produced `1 failed, 16
+passed`. Updating those four labels to `v0.3.0` produced `17 passed in 0.19s`
+for `.venv/bin/python -m pytest tests/test_repository.py -q`.

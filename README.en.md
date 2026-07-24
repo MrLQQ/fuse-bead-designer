@@ -20,9 +20,9 @@ Attach the source image in an image-capable Agent conversation, then send:
 
 You can add natural constraints such as “prefer standard 29 × 29 boards,” “preserve white beads,” or “do not guess behind this occlusion; mark it for my review.” The normal flow does not expose a Skill token or require local commands.
 
-## The v0.3 pattern-first flow
+## The v0.3.0 pattern-first flow
 
-v0.3 deliberately separates understanding an image from producing a countable pattern. First establish a logical pattern with verified dimensions; then the deterministic compiler maps colors, calculates counts, derives the board layout, and renders the deliverables. The three input routes are:
+v0.3.0 deliberately separates understanding an image from producing a countable pattern. First establish a logical pattern with verified dimensions; then the deterministic compiler maps colors, calculates counts, derives the board layout, and renders the deliverables. The three input routes are:
 
 1. **Finished-bead photo**: exclude fingers, tables, glare, and other interference, correct perspective, and produce a front-facing grid with declared dimensions. Only a rectified regular grid may enter the compiler.
 2. **Pixel art or an existing pattern**: verify its logical width and height, then compile it directly. Automatic grid recovery is allowed only when a unique nearest-neighbor scale is provable; ambiguous interpretations stop for confirmation.
