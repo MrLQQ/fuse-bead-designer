@@ -130,3 +130,8 @@ def test_verified_object_cutout_preserves_source_pixels_and_white_details():
     report = json.loads((output / "report.json").read_text(encoding="utf-8"))
     assert pattern["color_counts"]["warm-white"] > 0
     assert report["verification"] == "verified"
+
+
+def test_packager_uses_release_version():
+    packager = Path("tools/package_release.py").read_text(encoding="utf-8")
+    assert 'VERSION = "0.2.0"' in packager
