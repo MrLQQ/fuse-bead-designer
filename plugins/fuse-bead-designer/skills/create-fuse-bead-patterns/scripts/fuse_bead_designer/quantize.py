@@ -84,6 +84,52 @@ def sample_cells(
     return _limit_colors(cells, palette, color_limit)
 
 
+def sample_cell_centers(
+    image: Image.Image,
+    mask: Image.Image,
+    width: int,
+    height: int,
+    palette: list[PaletteColor],
+    *,
+    color_limit: int = 16,
+    grid_box: tuple[int, int, int, int] | None = None,
+) -> list[list[SampledCell]]:
+    """Palette-map small center windows of declared logical cells.
+
+    ``grid_box`` is the caller-declared grid extent.  The function never crops
+    based on image or mask content, so empty edge cells remain part of the
+    logical grid.
+    """
+    _validate_inputs(image, mask, width, height, palette, color_limit)
+    left, top, right, bottom = _validate_grid_box(grid_box, image.size)
+    rgb_image = image.convert("RGB")
+    coverage_mask = mask.convert("L")
+    image_pixels = rgb_image.load()
+    mask_pixels = coverage_mask.load()
+
+    cells: list[list[SampledCell]] = []
+    for row in range(height):
+        cell_top, cell_bottom = _source_bounds(row, bottom - top, height)
+        output_row: list[SampledCell] = []
+        for column in range(width):
+            cell_left, cell_right = _source_bounds(column, right - left, width)
+            sample_left, sample_right = _center_window(left + cell_left, left + cell_right)
+            sample_top, sample_bottom = _center_window(top + cell_top, top + cell_bottom)
+            output_row.append(
+                _sample_rectangle(
+                    image_pixels,
+                    mask_pixels,
+                    sample_left,
+                    sample_top,
+                    sample_right,
+                    sample_bottom,
+                    palette,
+                )
+            )
+        cells.append(output_row)
+    return _limit_colors(cells, palette, color_limit)
+
+
 def _validate_inputs(
     image: object,
     mask: object,
@@ -109,8 +155,40 @@ def _validate_inputs(
         raise ValueError("duplicate palette id")
 
 
+def _validate_grid_box(
+    grid_box: object,
+    image_size: tuple[int, int],
+) -> tuple[int, int, int, int]:
+    if grid_box is None:
+        return (0, 0, image_size[0], image_size[1])
+    if (
+        not isinstance(grid_box, tuple)
+        or len(grid_box) != 4
+        or any(not isinstance(value, int) or isinstance(value, bool) for value in grid_box)
+    ):
+        raise ValueError("grid_box must contain four integer coordinates")
+    left, top, right, bottom = grid_box
+    if left < 0 or top < 0 or right > image_size[0] or bottom > image_size[1]:
+        raise ValueError("grid_box must be within image bounds")
+    if left >= right or top >= bottom:
+        raise ValueError("grid_box must have positive width and height")
+    return grid_box
+
+
 def _source_bounds(index: int, source_length: int, output_length: int) -> tuple[int, int]:
     return index * source_length // output_length, (index + 1) * source_length // output_length
+
+
+def _center_window(start: int, end: int) -> tuple[int, int]:
+    rectangle_length = end - start
+    if rectangle_length <= 0:
+        return start, start
+    window_length = rectangle_length // 4
+    if window_length % 2 == 0:
+        window_length -= 1
+    window_length = max(1, window_length)
+    window_start = start + (rectangle_length - window_length) // 2
+    return window_start, window_start + window_length
 
 
 def _sample_rectangle(
