@@ -55,8 +55,8 @@ fuse-bead-designer/
 ├── examples/
 ├── tests/
 ├── .github/workflows/ci.yml
-├── README.md
-├── README.zh-CN.md
+├── README.md                    # Chinese primary documentation
+├── README.en.md                 # English alternative
 ├── CONTRIBUTING.md
 ├── LICENSE
 └── pyproject.toml
@@ -252,8 +252,9 @@ The workflow must not present `review-required` quantities as confirmed.
 
 ## 9. Documentation
 
-`README.md` is the English primary document. `README.zh-CN.md` provides the
-Chinese version. Both cover:
+`README.md` is the Chinese primary document and is the default GitHub project
+introduction. `README.en.md` provides the English alternative. Each document
+links to the other at the top. Both cover:
 
 - project purpose and honest capability boundaries;
 - real output screenshots;
@@ -366,5 +367,6 @@ The initial release is complete when:
   counts;
 - the plugin and skill validators pass;
 - the automated test suite passes;
-- English and Chinese installation instructions have been exercised;
+- Chinese and English installation instructions have been exercised, with the
+  Chinese `README.md` serving as the default GitHub landing page;
 - the public GitHub repository and `v0.1.0` release are available.
