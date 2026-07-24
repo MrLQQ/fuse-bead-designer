@@ -68,3 +68,35 @@ $ .venv/bin/python -m pytest -q
   `--confirm-large-board`; this preserves the existing safety gate.
 - Center sampling retains its fixed geometry requirement of at least four
   source pixels per logical cell; failures remain actionable CLI errors.
+
+## Review fixes
+
+Two review findings were corrected with focused regression cycles:
+
+1. Exact `--sampling median` with `--grid-box` initially sampled the full
+   padded image. A synthetic black `1 x 1` grid surrounded by red padding
+   failed as red instead of black. Exact median sampling now crops both the
+   image and occupancy mask to the resolved grid box before calling
+   `sample_cells`; the resolved logical dimensions are unchanged, and the
+   legacy branch still samples the full original image.
+2. High-resolution exact compilation initially accepted both a missing and a
+   corrupt original `--input` when the draft was valid. Both parametrized
+   cases returned success in RED. The CLI now opens and validates the original
+   source independently before opening and compiling the draft, so provenance
+   cannot name an unreadable source.
+
+Fresh review-fix verification:
+
+```text
+$ .venv/bin/python -m pytest tests/test_cli.py tests/test_models.py -q
+83 passed in 9.34s
+
+$ .venv/bin/python -m pytest -q
+211 passed in 9.79s
+```
+
+Self-review confirmed that the median crop is guarded by `exact_route`, draft
+pixels remain the only compiled pixels for a valid high-resolution exact
+route, missing/corrupt source failures publish no output directory, and no
+parser, policy, recovery, sampler, layout, schema, documentation, version, or
+example files changed.

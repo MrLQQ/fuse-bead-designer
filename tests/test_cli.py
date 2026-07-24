@@ -163,6 +163,36 @@ def test_cli_compiles_high_resolution_draft_and_records_original_provenance(tmp_
     assert report["compiled_input"] == str(draft)
 
 
+@pytest.mark.parametrize("source_state", ["missing", "corrupt"])
+def test_cli_validates_original_high_resolution_input_before_compiling_draft(
+    tmp_path, source_state
+):
+    source = tmp_path / "source.png"
+    if source_state == "corrupt":
+        source.write_bytes(b"not an image")
+    draft = tmp_path / "draft.png"
+    Image.new("RGBA", (4, 4), (17, 21, 21, 255)).save(draft)
+    output = tmp_path / "out"
+
+    result = run_cli(
+        source,
+        output,
+        "--classification",
+        "high-resolution-image",
+        "--draft-input",
+        str(draft),
+        "--width",
+        "1",
+        "--height",
+        "1",
+    )
+
+    assert result.returncode == 2
+    assert str(source) in result.stderr
+    assert "Traceback" not in result.stderr
+    assert not output.exists()
+
+
 def test_cli_requests_dimensions_for_ambiguous_pattern_draft(
     tmp_path, clean_subject_path
 ):
@@ -219,6 +249,37 @@ def test_cli_records_explicit_sampling_override(tmp_path, clean_subject_path):
 
     assert result.returncode == 0, result.stderr
     assert read_pattern(output)["settings"]["sampling"] == "median"
+
+
+def test_cli_exact_median_sampling_excludes_padding_outside_grid_box(tmp_path):
+    source = tmp_path / "padded-grid.png"
+    image = Image.new("RGBA", (12, 4), (229, 57, 53, 255))
+    for row in range(4):
+        for column in range(4, 8):
+            image.putpixel((column, row), (17, 21, 21, 255))
+    image.save(source)
+    output = tmp_path / "out"
+
+    result = run_cli(
+        source,
+        output,
+        "--classification",
+        "pixel-art",
+        "--width",
+        "1",
+        "--height",
+        "1",
+        "--grid-box",
+        "4,0,8,4",
+        "--sampling",
+        "median",
+    )
+
+    assert result.returncode == 0, result.stderr
+    pattern = read_pattern(output)
+    assert (pattern["width"], pattern["height"]) == (1, 1)
+    assert pattern["cells"] == [["black"]]
+    assert pattern["settings"]["grid_box"] == [4, 0, 8, 4]
 
 
 def test_cli_records_explicit_cleanup_override(tmp_path, clean_subject_path):

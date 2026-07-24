@@ -127,6 +127,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         compiled_path = draft_path if draft_used else source_path
         assert compiled_path is not None
+        if draft_used:
+            _open_image(source_path)
         image = _open_image(compiled_path)
         arguments.grid_box = _parse_grid_box(arguments.grid_box, image.size)
         grid_box = arguments.grid_box
@@ -190,6 +192,17 @@ def main(argv: Sequence[str] | None = None) -> int:
                 palette,
                 color_limit=arguments.colors,
                 grid_box=grid_box,
+            )
+        elif exact_route:
+            median_image = image.crop(grid_box) if grid_box is not None else image
+            median_mask = mask.crop(grid_box) if grid_box is not None else mask
+            sampled_cells = sample_cells(
+                median_image,
+                median_mask,
+                selection.width,
+                selection.height,
+                palette,
+                color_limit=arguments.colors,
             )
         else:
             sampled_cells = sample_cells(
