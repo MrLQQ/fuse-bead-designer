@@ -1,5 +1,6 @@
 """Palette loading, validation, and perceptual nearest-color matching."""
 
+import csv
 from dataclasses import dataclass
 import json
 from pathlib import Path
@@ -10,6 +11,7 @@ from .models import PaletteColor
 
 _HEX_PATTERN = re.compile(r"^#[0-9A-Fa-f]{6}$")
 _GENERIC_PALETTE_PATH = Path(__file__).resolve().parents[2] / "assets" / "palettes" / "generic.json"
+_CSV_COLUMNS = ("id", "name", "name_zh", "hex", "brand_code")
 
 
 @dataclass(frozen=True)
@@ -20,21 +22,47 @@ class ColorMatch:
 
 
 def load_palette(path: str | Path | None = None) -> list[PaletteColor]:
-    """Load and validate the bundled generic or a user-provided JSON palette."""
+    """Load and validate the bundled JSON or user-provided JSON/CSV palette."""
     palette_path = _GENERIC_PALETTE_PATH if path is None else Path(path)
+    suffix = palette_path.suffix.lower()
+    if suffix == ".json":
+        entries = _load_json_entries(palette_path)
+    elif suffix == ".csv":
+        entries = _load_csv_entries(palette_path)
+    else:
+        raise ValueError("palette path must end in .json or .csv")
+
+    if not isinstance(entries, list):
+        raise ValueError("palette must be a JSON array")
+    if not entries:
+        raise ValueError("palette must contain at least one color")
+    palette = [_parse_palette_entry(entry) for entry in entries]
+    _validate_unique_values(palette)
+    return palette
+
+
+def _load_json_entries(palette_path: Path) -> object:
     try:
         data = json.loads(palette_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as error:
         raise ValueError("invalid palette JSON") from error
+    return data
 
-    if not isinstance(data, list):
-        raise ValueError("palette must be a JSON array")
-    if not data:
-        raise ValueError("palette must contain at least one color")
 
-    palette = [_parse_palette_entry(entry) for entry in data]
-    _validate_unique_values(palette)
-    return palette
+def _load_csv_entries(palette_path: Path) -> list[dict[str, str | None]]:
+    try:
+        with palette_path.open(encoding="utf-8-sig", newline="") as stream:
+            reader = csv.DictReader(stream)
+            if reader.fieldnames != list(_CSV_COLUMNS):
+                raise ValueError("palette CSV header must be id,name,name_zh,hex,brand_code")
+            entries = []
+            for row in reader:
+                if None in row or any(row.get(field) is None for field in _CSV_COLUMNS):
+                    raise ValueError("palette CSV rows must have exactly five fields")
+                entries.append({field: row[field] for field in _CSV_COLUMNS})
+    except csv.Error as error:
+        raise ValueError("invalid palette CSV") from error
+    return entries
 
 
 def nearest_color(rgb: tuple[int, int, int], palette: list[PaletteColor]) -> ColorMatch:

@@ -68,11 +68,12 @@ def test_report_contains_full_compile_fields(tmp_path):
         board_decision={"columns": 1, "rows": 1},
         palette_decision={"source": "generic"},
         cleanup_changes=[(1, 1)],
+        inferred_cells=[(0, 0)],
         warnings=["check outline"],
         verification=VerificationState.REVIEW_REQUIRED,
     )
 
-    write_artifacts(make_pattern(), tmp_path, report=report)
+    write_artifacts(make_pattern(inferred_cells=[(0, 0)]), tmp_path, report=report)
 
     written = json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))
     assert written == {
@@ -81,6 +82,7 @@ def test_report_contains_full_compile_fields(tmp_path):
         "board_decision": {"columns": 1, "rows": 1},
         "palette_decision": {"source": "generic"},
         "cleanup_changes": [[1, 1]],
+        "inferred_cells": [[0, 0]],
         "warnings": ["check outline"],
         "verification": "review-required",
     }
@@ -104,6 +106,34 @@ def test_review_overlay_is_only_written_for_inferred_or_cleanup_markers(tmp_path
 
     write_artifacts(make_pattern(), tmp_path / "none")
     assert not (tmp_path / "none" / "review.png").exists()
+
+
+@pytest.mark.parametrize(
+    ("inferred_cells", "message"),
+    [
+        ("not coordinates", "inferred_cells must be a list"),
+        ([(3, 0)], "inferred cell is outside the grid"),
+    ],
+)
+def test_report_inferred_cells_are_validated_before_any_artifact_is_written(
+    tmp_path, inferred_cells, message
+):
+    report = CompileReport(
+        classification="pixel-art",
+        removed_interference=[],
+        board_decision={},
+        palette_decision={},
+        cleanup_changes=[],
+        inferred_cells=inferred_cells,
+        warnings=[],
+        verification=VerificationState.VERIFIED,
+    )
+    output_dir = tmp_path / "invalid-inferred"
+
+    with pytest.raises(ValueError, match=message):
+        write_artifacts(make_pattern(), output_dir, report=report)
+
+    assert not output_dir.exists()
 
 
 def test_clean_write_removes_a_stale_review_overlay_from_the_same_output_dir(tmp_path):

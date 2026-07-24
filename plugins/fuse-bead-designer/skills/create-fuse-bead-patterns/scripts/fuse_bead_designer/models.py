@@ -151,6 +151,7 @@ class CompileReport:
     cleanup_changes: list[tuple[int, int]]
     warnings: list[str]
     verification: VerificationState
+    inferred_cells: list[tuple[int, int]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -159,6 +160,7 @@ class CompileReport:
             "board_decision": self.board_decision,
             "palette_decision": self.palette_decision,
             "cleanup_changes": [list(cell) for cell in self.cleanup_changes],
+            "inferred_cells": [list(cell) for cell in self.inferred_cells],
             "warnings": self.warnings,
             "verification": self.verification.value,
         }

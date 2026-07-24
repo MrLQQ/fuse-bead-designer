@@ -71,6 +71,40 @@ def test_custom_palette_allows_repeated_empty_brand_codes(tmp_path):
     assert [color.brand_code for color in load_palette(path)] == ["", "   "]
 
 
+def test_custom_csv_palette_accepts_utf8_bom_and_preserves_brand_codes(tmp_path):
+    path = tmp_path / "palette.csv"
+    path.write_text(
+        "id,name,name_zh,hex,brand_code\nblack,Black,黑色,#111515,A-01\n",
+        encoding="utf-8-sig",
+    )
+
+    assert load_palette(path) == [
+        PaletteColor("black", "Black", "黑色", "#111515", "A-01")
+    ]
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        ("id,name,hex,brand_code\na,Alpha,#000000,01\n", "palette CSV header"),
+        (
+            "id,name,name_zh,hex,brand_code,extra\na,Alpha,甲,#000000,01,unexpected\n",
+            "palette CSV header",
+        ),
+        (
+            "id,name,name_zh,hex,brand_code\na,Alpha,甲,#000000,01,unexpected\n",
+            "palette CSV rows must have exactly five fields",
+        ),
+    ],
+)
+def test_custom_csv_palette_rejects_malformed_columns(tmp_path, payload, message):
+    path = tmp_path / "palette.csv"
+    path.write_text(payload, encoding="utf-8")
+
+    with pytest.raises(ValueError, match=message):
+        load_palette(path)
+
+
 def test_nearest_color_returns_deterministic_exact_match():
     palette = [
         PaletteColor("red", "Red", "红色", "#E53935"),

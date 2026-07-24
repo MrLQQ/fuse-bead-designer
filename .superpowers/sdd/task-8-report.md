@@ -58,3 +58,55 @@ and all compiler modules, followed by `git diff --check`.
 13a38c8ac9b7c24fb05e6a16c24e00ec46f76c15d2cd7370eadb8e0317de71de  create_pattern.py
 f19bf60367253b4224e16cdcb7fd72dd341b9d5d75c950e00f28613209327707  test_cli.py
 ```
+
+## Corrective review follow-up
+
+### RED
+
+The review regressions exposed three end-to-end contract gaps: `--force` could
+write JSON/CSV before failing on an existing generated-artifact directory,
+`report.json` omitted inferred regions, and a `.csv` palette was incorrectly
+parsed as JSON. The focused regression run reported `10 failed, 34 passed`.
+
+### GREEN
+
+Focused CLI, artifact, report, and palette verification:
+
+```text
+44 passed in 4.07s
+```
+
+Full compiler verification on the established Python 3.12.13 runtime:
+
+```text
+127 passed in 7.16s
+```
+
+`py_compile` for the CLI/compiler modules and `git diff --check` also passed.
+
+### Corrections and self-review
+
+- Artifact generation now renders and serializes into a same-filesystem staging
+  directory. Generated target conflicts (including directories and symlinks)
+  are rejected before writing; publish temporarily backs up only the known
+  generated artifacts and restores them on publish failure. Unrelated files
+  are never moved or deleted.
+- `CompileReport` now serializes `inferred_cells`; the writer requires report
+  coordinates to be list-shaped, integer, in-bounds, and equal to the
+  canonical pattern coordinates before creating output.
+- Custom palette loading selects JSON or CSV by extension. CSV requires the
+  exact UTF-8/UTF-8-sig header `id,name,name_zh,hex,brand_code`, rejects extra
+  or short rows deterministically, and reuses the existing palette/brand
+  validation without manufacturing metadata.
+
+### Corrective SHA-256
+
+```text
+cac6615e77f2d96f2875b1f1ca02042b079149df0ff5887fdcf6f10f47380897  cli.py
+31bb644d3a32e14b2fc3852538baab366436aac13cfeb8203a4b6bc40921b0d6  io.py
+8f3749aeefb1d12d0565fea73c9c3d2750c5c38f9fcd87a204c67e75d11c248c  models.py
+e4da36ad80c69bcb275cc85e1b504ad59f88233fe224115dc15c91ae19d7c78a  palettes.py
+d08fbcdddf4db8394899b8af992b25a3898df550fa2ed6080c80af97146c1d8b  test_cli.py
+5cbff2a70f85753fc970d51254944d0a320cbc7af00cb98a7ece23dfee449559  test_render.py
+b0ec71762c7d4b85286c331a61ed54ce4925083b1409aeabd62aa80a0648cdf0  test_palettes.py
+```

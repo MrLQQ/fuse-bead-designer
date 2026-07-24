@@ -225,6 +225,8 @@ def test_cli_creates_review_output_for_inferred_cells(tmp_path, clean_subject_pa
     assert result.returncode == 0, result.stderr
     assert (output / "review.png").is_file()
     assert read_pattern(output)["inferred_cells"] == [[0, 0]]
+    report = json.loads((output / "report.json").read_text(encoding="utf-8"))
+    assert report["inferred_cells"] == [[0, 0]]
 
 
 def test_cli_guards_nonempty_output_and_force_preserves_unrelated_files(tmp_path, clean_subject_path):
@@ -243,6 +245,57 @@ def test_cli_guards_nonempty_output_and_force_preserves_unrelated_files(tmp_path
 
     assert forced.returncode == 0, forced.stderr
     assert note.read_text(encoding="utf-8") == "preserve me"
+
+
+def test_cli_force_failure_does_not_partially_publish_generated_artifacts(
+    tmp_path, clean_subject_path
+):
+    output = tmp_path / "out"
+    output.mkdir()
+    template = output / "template.png"
+    template.mkdir()
+    marker = template / "keep.txt"
+    marker.write_text("existing template directory", encoding="utf-8")
+    prior_report = output / "report.json"
+    prior_report.write_text("old report", encoding="utf-8")
+    unrelated = output / "unrelated.txt"
+    unrelated.write_text("preserve me", encoding="utf-8")
+
+    result = run_cli(clean_subject_path, output, "--force")
+
+    assert result.returncode == 2
+    assert "generated artifact target is not a regular file: template.png" in result.stderr
+    assert marker.read_text(encoding="utf-8") == "existing template directory"
+    assert prior_report.read_text(encoding="utf-8") == "old report"
+    assert unrelated.read_text(encoding="utf-8") == "preserve me"
+    assert not (output / "pattern.json").exists()
+    assert not (output / "colors.csv").exists()
+    assert not (output / "review.png").exists()
+
+
+def test_cli_loads_csv_palette_and_preserves_brand_code(tmp_path, clean_subject_path):
+    palette = tmp_path / "palette.csv"
+    palette.write_text(
+        "id,name,name_zh,hex,brand_code\nred,Red,红色,#E53935,R-01\n",
+        encoding="utf-8",
+    )
+    output = tmp_path / "out"
+
+    result = run_cli(
+        clean_subject_path,
+        output,
+        "--width",
+        "29",
+        "--height",
+        "29",
+        "--palette",
+        str(palette),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert read_pattern(output)["palette"][0]["brand_code"] == "R-01"
+    with (output / "colors.csv").open(encoding="utf-8", newline="") as stream:
+        assert list(csv.DictReader(stream))[0]["brand_code"] == "R-01"
 
 
 def test_cli_outputs_have_count_agreement_and_report_options(tmp_path, clean_subject_path):

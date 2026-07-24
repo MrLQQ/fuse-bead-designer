@@ -37,7 +37,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--width", type=_positive_integer, metavar="CELLS")
     parser.add_argument("--height", type=_positive_integer, metavar="CELLS")
     parser.add_argument("--max-boards", type=_positive_integer, default=4, metavar="COUNT")
-    parser.add_argument("--palette", metavar="PATH", help="JSON palette path")
+    parser.add_argument("--palette", metavar="PATH", help="JSON or CSV palette path")
     parser.add_argument("--colors", type=_color_limit, default=16, metavar="COUNT")
     parser.add_argument(
         "--verification",
@@ -153,6 +153,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             cleanup_changes=cleanup.changed_cells,
             warnings=_warnings(selection, pattern.verification),
             verification=pattern.verification,
+            inferred_cells=inferred_cells,
         )
         write_artifacts(pattern, output_dir, report=report)
     except (OSError, ValueError) as error:

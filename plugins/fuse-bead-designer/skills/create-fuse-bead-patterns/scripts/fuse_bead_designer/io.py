@@ -2,13 +2,17 @@
 
 import csv
 import json
+import os
 from pathlib import Path
+import shutil
+import tempfile
 
 from .models import CompileReport, Pattern
 from .render import render_review, render_template
 
 
 CSV_COLUMNS = ("id", "name", "name_zh", "hex", "brand_code", "count")
+GENERATED_ARTIFACTS = ("template.png", "pattern.json", "colors.csv", "report.json", "review.png")
 
 
 def write_artifacts(
@@ -17,20 +21,62 @@ def write_artifacts(
     *,
     report: CompileReport | None = None,
 ) -> None:
-    """Write count-consistent image, JSON, CSV, report, and conditional review PNG."""
+    """Write count-consistent artifacts without exposing partial updates."""
     pattern.validate()
-    _validate_cleanup_changes(pattern, report)
+    _validate_report(pattern, report)
     destination = Path(output_dir)
-    destination.mkdir(parents=True, exist_ok=True)
-    review_path = destination / "review.png"
-    _write_json(destination / "pattern.json", pattern.to_dict())
-    _write_colors_csv(pattern, destination / "colors.csv")
-    _write_json(destination / "report.json", _report_data(pattern, report))
-    render_template(pattern).save(destination / "template.png")
+    _validate_destination(destination)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix=".fuse-bead-staging-", dir=destination.parent))
+    try:
+        _write_staged_artifacts(pattern, staging, report)
+        destination.mkdir(exist_ok=True)
+        _publish_staged_artifacts(staging, destination)
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+
+
+def _write_staged_artifacts(
+    pattern: Pattern, staging: Path, report: CompileReport | None
+) -> None:
+    _write_json(staging / "pattern.json", pattern.to_dict())
+    _write_colors_csv(pattern, staging / "colors.csv")
+    _write_json(staging / "report.json", _report_data(pattern, report))
+    render_template(pattern).save(staging / "template.png")
     if pattern.inferred_cells or (report is not None and report.cleanup_changes):
-        render_review(pattern, report).save(review_path)
-    else:
-        review_path.unlink(missing_ok=True)
+        render_review(pattern, report).save(staging / "review.png")
+
+
+def _validate_destination(destination: Path) -> None:
+    if destination.exists() and not destination.is_dir():
+        raise ValueError("output path must be a directory")
+    for name in GENERATED_ARTIFACTS:
+        target = destination / name
+        if target.is_symlink() or (target.exists() and not target.is_file()):
+            raise ValueError(f"generated artifact target is not a regular file: {name}")
+
+
+def _publish_staged_artifacts(staging: Path, destination: Path) -> None:
+    backup = Path(tempfile.mkdtemp(prefix=".fuse-bead-backup-", dir=destination.parent))
+    moved_originals: list[str] = []
+    published: list[str] = []
+    try:
+        for name in GENERATED_ARTIFACTS:
+            target = destination / name
+            if target.exists():
+                os.replace(target, backup / name)
+                moved_originals.append(name)
+        for staged_artifact in staging.iterdir():
+            os.replace(staged_artifact, destination / staged_artifact.name)
+            published.append(staged_artifact.name)
+    except OSError:
+        for name in published:
+            (destination / name).unlink(missing_ok=True)
+        for name in moved_originals:
+            os.replace(backup / name, destination / name)
+        raise
+    finally:
+        shutil.rmtree(backup, ignore_errors=True)
 
 
 def _write_json(path: Path, data: dict[str, object]) -> None:
@@ -71,26 +117,36 @@ def _report_data(pattern: Pattern, report: CompileReport | None) -> dict[str, ob
         },
         "palette_decision": {"color_ids": [color.id for color in pattern.palette]},
         "cleanup_changes": [],
+        "inferred_cells": [list(cell) for cell in pattern.inferred_cells],
         "warnings": [],
         "verification": pattern.verification.value,
     }
 
 
-def _validate_cleanup_changes(pattern: Pattern, report: CompileReport | None) -> None:
+def _validate_report(pattern: Pattern, report: CompileReport | None) -> None:
     if report is None:
         return
-    if not isinstance(report.cleanup_changes, list):
-        raise ValueError("cleanup_changes must be a list")
-    for change in report.cleanup_changes:
-        if not isinstance(change, (list, tuple)) or len(change) != 2:
-            raise ValueError("cleanup change must be a coordinate pair")
-        column, row = change
+    _validate_coordinates(pattern, report.cleanup_changes, "cleanup change", "cleanup_changes")
+    _validate_coordinates(pattern, report.inferred_cells, "inferred cell", "inferred_cells")
+    if report.inferred_cells != pattern.inferred_cells:
+        raise ValueError("report inferred cells must match pattern inferred cells")
+
+
+def _validate_coordinates(
+    pattern: Pattern, coordinates: object, label: str, field_name: str
+) -> None:
+    if not isinstance(coordinates, list):
+        raise ValueError(f"{field_name} must be a list")
+    for coordinate in coordinates:
+        if not isinstance(coordinate, (list, tuple)) or len(coordinate) != 2:
+            raise ValueError(f"{label} must be a coordinate pair")
+        column, row = coordinate
         if (
             not isinstance(column, int)
             or isinstance(column, bool)
             or not isinstance(row, int)
             or isinstance(row, bool)
         ):
-            raise ValueError("cleanup change coordinates must be integers")
+            raise ValueError(f"{label} coordinates must be integers")
         if not (0 <= column < pattern.width and 0 <= row < pattern.height):
-            raise ValueError("cleanup change is outside the grid")
+            raise ValueError(f"{label} is outside the grid")
