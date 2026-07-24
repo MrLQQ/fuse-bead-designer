@@ -1,0 +1,8 @@
+Use case: photorealistic-natural
+Asset type: openly distributable raw evaluation fixture for a craft-pattern conversion task
+Primary request: Create an original overhead photograph of physical fuse-bead work: a completed flat 18-by-18 bead design of a smiling purple octopus with yellow spots on a square transparent pegboard. A human hand covers only a small non-critical corner of the pegboard, not the octopus face or main silhouette.
+Scene/backdrop: a visible light wood craft table around the pegboard, with no other tools or objects.
+Style/medium: realistic product photograph; clearly visible individual round plastic fuse beads and pegboard holes.
+Composition/framing: top-down view, one centered bead design; hand enters from the upper-left and covers a small corner only.
+Lighting/mood: soft natural daylight.
+Constraints: no watermark, no logo, no text, no additional subjects, do not make it an illustration or a digital grid.

@@ -1,0 +1,8 @@
+Use case: illustration-story
+Asset type: openly distributable raw evaluation fixture for a craft-pattern conversion task
+Primary request: Create an original clean non-pixel mascot illustration of a cheerful red panda librarian wearing round glasses and a teal scarf, holding one small golden book.
+Scene/backdrop: plain warm cream background with no objects, no texture, and no text.
+Style/medium: polished high-resolution digital illustration with soft shaded shapes and gentle color gradients; explicitly not pixel art, not a grid, and not bead art.
+Composition/framing: centered full-body subject with generous empty margin, single subject, clear silhouette.
+Lighting/mood: bright friendly studio-like lighting.
+Constraints: no watermark, no logo, no letters, no other characters, no frame.
