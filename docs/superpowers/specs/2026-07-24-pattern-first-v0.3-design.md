@@ -57,14 +57,16 @@ Each route has a distinct contract:
 
 | Source | Required preparation | Deterministic behavior |
 |---|---|---|
-| Finished bead photo | rectify perspective; remove fingers, glare, board holes, and background; preserve visible bead placement; mark inferred occlusion | recover or receive the logical grid; center-sample cells; no singleton cleanup |
-| Pixel art | remove only non-subject padding; preserve logical pixels | recover or receive the logical grid; nearest/center sampling; no singleton cleanup |
+| Finished bead photo | rectify perspective; remove fingers, glare, board holes, and background; preserve visible bead placement; mark inferred occlusion | receive a declared rectified logical grid; center-sample cells; no singleton cleanup |
+| Pixel art | preserve logical pixels and intentional empty cells | recover a nearest-neighbor scale only when evidence is unambiguous, otherwise require declared dimensions; center sampling; no singleton cleanup |
 | High-resolution image | create a plain bead-pattern draft that prioritizes silhouette and identity features | normalize the declared draft grid; map palette; count cells; no model-generated legend or quantities |
 | Pattern draft | provide grid dimensions and optional grid bounds | compile exactly that grid; never choose a standard board size first |
 
-If a finished-bead photo is obstructed or a high-resolution image has not yet
-been converted into a pattern draft, the compiler must fail with an actionable
-message instead of silently applying generic rectangular downsampling.
+If a finished-bead photo has not been rectified into a declared grid, a
+high-resolution image has not yet been converted into a pattern draft, or
+pixel-grid recovery is mathematically ambiguous, the compiler must fail with an
+actionable message instead of silently applying generic rectangular
+downsampling.
 
 ### AI and deterministic responsibility boundary
 
@@ -84,7 +86,8 @@ It must not:
 
 Deterministic code must:
 
-- crop non-subject padding before analysis;
+- preserve declared logical empty cells and use an explicit grid box for display
+  padding;
 - normalize the exact logical cell matrix;
 - map each occupied cell to the selected palette;
 - count every color;
@@ -116,6 +119,10 @@ def policy_for(classification: str) -> RoutePolicy:
 requires a pattern draft unless the caller explicitly declares that the input
 has already been rectified into a clean logical grid.
 
+Nearest-neighbor logical-grid recovery is confidence-gated. A uniform image,
+anti-aliased image, or raster with multiple equally valid logical scales must
+raise an ambiguity error. Explicit logical dimensions always win.
+
 ### Pattern sizing and board layout
 
 Replace board-first selection with two operations:
@@ -136,8 +143,12 @@ Recommendations preserve aspect ratio and produce arbitrary logical dimensions
 for economy, balanced, and detail variants. They are advisory. Explicit pattern
 dimensions always win.
 
-The detail score must be measured from the cropped subject rather than remaining
-the current fixed `0.5`.
+The detail score must be measured from the relevant subject/grid box rather than
+remaining the current fixed `0.5`.
+
+Rendering must draw board seams at every 29 cells even when the last board is
+partial. A `68 x 60` pattern therefore remains `68 x 60` while showing seams at
+29 and 58 in both applicable directions.
 
 ### Exact-grid compilation
 
@@ -146,13 +157,16 @@ The CLI keeps `--width` and `--height` as logical pattern dimensions and adds:
 - `pattern-draft` to `--classification`;
 - `--grid-box LEFT,TOP,RIGHT,BOTTOM` for a draft whose grid does not fill the
   image;
+- `--draft-input PATH` for the semantic draft created from a high-resolution
+  source;
 - `--rectified-grid` to allow direct finished-bead compilation;
 - `--cleanup` as an explicit opt-in compatibility switch.
 
 Default compilation for `pixel-art` and `pattern-draft`:
 
-1. crop transparent or derived non-subject padding unless `--grid-box` is set;
-2. divide only the grid box into the declared logical cells;
+1. preserve the declared logical canvas; use `--grid-box` to exclude display
+   padding;
+2. divide only the declared grid box into the declared logical cells;
 3. sample a small center window, not the full rectangle median;
 4. map to the palette;
 5. do not remove isolated cells;
@@ -189,7 +203,9 @@ The regression suite must prove:
 - classification changes route policy and invalid routes fail loudly;
 - a non-29-multiple grid such as `68 x 60` remains `68 x 60`;
 - `68 x 60` derives a `3 x 3` board layout without resizing the art;
-- transparent padding does not change pattern recommendations;
+- an explicit grid box excludes display padding without deleting intentional
+  empty logical cells;
+- ambiguous logical pixel scales fail with an actionable error;
 - center sampling preserves intentional single-cell features;
 - pixel-art and pattern-draft routes do not run singleton cleanup;
 - totals equal the sum of color counts;
@@ -206,7 +222,9 @@ exact picture.
 - Release as `0.3.0`.
 - Keep the existing artifact formats compatible.
 - Preserve the old median sampler behind an explicit compatibility option.
+- Do not claim automatic glare/perspective bead-lattice detection in this
+  Pillow-only release; rectified finished-bead inputs require declared grid
+  evidence.
 - Update Chinese README first and keep the English README equivalent.
 - Rebuild both release archives deterministically.
 - Validate the Skill and Plugin before publishing.
-

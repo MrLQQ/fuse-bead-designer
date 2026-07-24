@@ -18,6 +18,8 @@
 - `pixel-art` and `pattern-draft` default to center sampling with cleanup disabled.
 - `high-resolution-image` must not be compiled directly without a pattern draft.
 - `finished-bead-photo` must not be compiled directly unless explicitly marked `--rectified-grid`.
+- Ambiguous pixel-grid recovery must fail instead of guessing a logical scale.
+- Intentional transparent/empty logical cells must not be removed by automatic cropping.
 - Image generation may design/restore the pattern draft but never supplies authoritative counts, final legend, or verification status.
 - Tests follow RED-GREEN-REFACTOR and every task is committed before review.
 
@@ -92,6 +94,8 @@ git commit -m "docs: separate plugin installation from use"
 **Files:**
 - Create: `plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/fuse_bead_designer/sizing.py`
 - Modify: `plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/fuse_bead_designer/boards.py`
+- Modify: `plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/fuse_bead_designer/models.py`
+- Modify: `plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/fuse_bead_designer/render.py`
 - Modify: `plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/fuse_bead_designer/__init__.py`
 - Modify: `tests/test_boards.py`
 - Create: `tests/test_sizing.py`
@@ -142,6 +146,10 @@ Also assert recommendations:
 - increase monotonically with detail score;
 - validate finite positive inputs.
 
+Add model/render assertions that a `68 x 60` pattern validates with a `3 x 3`
+layout and renders board seams at logical coordinates 29 and 58 even though the
+last boards are partial.
+
 - [ ] **Step 2: Run focused tests and verify RED**
 
 Run:
@@ -161,6 +169,11 @@ short side from source aspect ratio and clamp it to at least `1`.
 Retain `select_board` only as a deprecated compatibility wrapper. New code must
 call `layout_boards` after pattern dimensions are selected.
 
+Update `Pattern` validation to require board columns/rows equal
+`ceil(pattern_dimension / module_size)` without requiring the pattern dimension
+to equal the board capacity. Render module seams independently from
+`is_custom_size`.
+
 - [ ] **Step 4: Verify GREEN and refactor**
 
 Run focused tests. Confirm no recommendation code refers to
@@ -177,6 +190,7 @@ git commit -m "feat: decouple pattern sizing from board layout"
 
 **Files:**
 - Create: `plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/fuse_bead_designer/routing.py`
+- Create: `plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/fuse_bead_designer/logical_grid.py`
 - Modify: `plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/fuse_bead_designer/quantize.py`
 - Modify: `plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/fuse_bead_designer/cli.py`
 - Modify: `plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/scripts/fuse_bead_designer/models.py`
@@ -214,6 +228,16 @@ def sample_cell_centers(
     color_limit: int = 16,
     grid_box: tuple[int, int, int, int] | None = None,
 ) -> list[list[SampledCell]]
+
+@dataclass(frozen=True)
+class GridSpec:
+    width: int
+    height: int
+    box: tuple[int, int, int, int]
+    source: str
+    confidence: float
+
+def recover_nearest_neighbor_grid(image: Image.Image) -> GridSpec
 ```
 
 - [ ] **Step 1: Write route-policy tests and verify RED**
@@ -227,13 +251,19 @@ Assert:
 - `finished-bead-photo`: raises unless `rectified_grid=True`;
 - rectified finished-bead input uses center sampling and no cleanup.
 
+Assert nearest-neighbor recovery accepts a known `16 x 16` logical image scaled
+by `4`, but raises an actionable ambiguity error for uniform, anti-aliased, or
+equally valid scale inputs. Explicit `--width` and `--height` always win.
+
 - [ ] **Step 2: Write exact-grid sampling tests and verify RED**
 
-Create a synthetic scaled logical grid containing a one-cell eye highlight and
-transparent padding. Assert that center sampling:
+Create a synthetic scaled logical grid containing a one-cell eye highlight,
+intentional empty logical cells, and separate display padding. Assert that
+center sampling:
 
 - returns the declared grid dimensions;
-- ignores padding after a supplied/cropped grid box;
+- ignores display padding only after a supplied grid box;
+- preserves intentional empty logical cells inside that box;
 - preserves the one-cell highlight;
 - keeps color totals internally consistent.
 
@@ -249,20 +279,24 @@ Add:
 
 ```text
 --classification pattern-draft
+--draft-input PATH
 --grid-box LEFT,TOP,RIGHT,BOTTOM
 --rectified-grid
 --cleanup
 --sampling center|median
+--legacy-resample
 ```
 
 Rules:
 
 - route policy chooses default sampling and cleanup;
 - an explicit compatibility sampling flag may request median sampling;
+- `unclassified` or `--legacy-resample` preserves the v0.2 compatibility path;
 - `--cleanup` is opt-in;
 - explicit `--width` and `--height` are pattern dimensions;
 - board layout is calculated with `layout_boards`;
-- selection uses the cropped subject, never raw transparent padding;
+- exact-grid selection uses explicit dimensions/recovery evidence and never
+  guesses from raw canvas padding;
 - reports record `source_classification`, `sampling`, `cleanup`, `grid_box`,
   and board layout.
 
@@ -319,6 +353,7 @@ Assert that the Skill:
 - forbids model-generated counts and final legend;
 - branches by source class;
 - requires actual grid verification;
+- fails on ambiguous grid recovery instead of using display pixels as beads;
 - does not default to singleton cleanup for pixel art or pattern drafts.
 
 - [ ] **Step 3: Add the complex fixture and failing regression**
@@ -411,7 +446,7 @@ Explain:
 - limitations and inferred-region handling.
 
 Do not claim automatic direct photo compilation where the semantic-draft route
-is required.
+or rectified declared-grid route is required.
 
 - [ ] **Step 4: Regenerate representative examples**
 
@@ -474,4 +509,3 @@ Send a concise Chinese summary to `2802351094@qq.com` containing:
 - the new installation sentence;
 - the new natural-language usage sentence;
 - any remaining limitations.
-
