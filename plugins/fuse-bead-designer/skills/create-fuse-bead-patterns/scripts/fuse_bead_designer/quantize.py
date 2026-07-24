@@ -102,6 +102,7 @@ def sample_cell_centers(
     """
     _validate_inputs(image, mask, width, height, palette, color_limit)
     left, top, right, bottom = _validate_grid_box(grid_box, image.size)
+    _validate_center_sampling_geometry(left, top, right, bottom, width, height)
     rgb_image = image.convert("RGB")
     coverage_mask = mask.convert("L")
     image_pixels = rgb_image.load()
@@ -179,14 +180,27 @@ def _source_bounds(index: int, source_length: int, output_length: int) -> tuple[
     return index * source_length // output_length, (index + 1) * source_length // output_length
 
 
+def _validate_center_sampling_geometry(
+    left: int,
+    top: int,
+    right: int,
+    bottom: int,
+    width: int,
+    height: int,
+) -> None:
+    if right - left < width * 4 or bottom - top < height * 4:
+        raise ValueError(
+            "center sampling requires at least 4 source pixels per logical cell "
+            "in each direction"
+        )
+
+
 def _center_window(start: int, end: int) -> tuple[int, int]:
     rectangle_length = end - start
-    if rectangle_length <= 0:
-        return start, start
     window_length = rectangle_length // 4
     if window_length % 2 == 0:
         window_length -= 1
-    window_length = max(1, window_length)
+    assert window_length >= 1
     window_start = start + (rectangle_length - window_length) // 2
     return window_start, window_start + window_length
 

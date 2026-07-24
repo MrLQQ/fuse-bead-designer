@@ -21,12 +21,12 @@ def _checkerboard(width: int, height: int) -> Image.Image:
 
 def test_recovers_provable_integer_nearest_neighbor_grid():
     logical = _checkerboard(16, 16)
-    display = logical.resize((64, 64), Image.Resampling.NEAREST)
+    display = logical.resize((80, 80), Image.Resampling.NEAREST)
 
     spec = recover_nearest_neighbor_grid(display)
 
     assert (spec.width, spec.height) == logical.size
-    assert spec.box == (0, 0, 64, 64)
+    assert spec.box == (0, 0, 80, 80)
     assert spec.source == "nearest-neighbor"
     assert spec.confidence == 1.0
 
@@ -57,3 +57,24 @@ def test_recovery_rejects_inconsistent_axis_evidence():
 
     with pytest.raises(AmbiguousGridError, match="declare"):
         recover_nearest_neighbor_grid(image)
+
+
+def test_recovery_rejects_plain_composite_scale_with_multiple_valid_factors():
+    display = _checkerboard(4, 4).resize((16, 16), Image.Resampling.NEAREST)
+
+    with pytest.raises(AmbiguousGridError, match="declare"):
+        recover_nearest_neighbor_grid(display)
+
+
+def test_recovery_rejects_adjacent_duplicate_logical_rows_and_columns():
+    base = _checkerboard(4, 4)
+    duplicated = Image.new("RGB", (8, 8))
+    source_columns = [index // 2 for index in range(8)]
+    source_rows = [index // 2 for index in range(8)]
+    for y, source_y in enumerate(source_rows):
+        for x, source_x in enumerate(source_columns):
+            duplicated.putpixel((x, y), base.getpixel((source_x, source_y)))
+    display = duplicated.resize((32, 32), Image.Resampling.NEAREST)
+
+    with pytest.raises(AmbiguousGridError, match="declare"):
+        recover_nearest_neighbor_grid(display)

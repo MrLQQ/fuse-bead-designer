@@ -232,3 +232,43 @@ def test_center_sampling_rejects_invalid_grid_box(grid_box):
             load_palette(),
             grid_box=grid_box,
         )
+
+
+@pytest.mark.parametrize(
+    ("image_size", "width", "height"),
+    [
+        ((3, 4), 1, 1),
+        ((4, 3), 1, 1),
+        ((7, 8), 2, 2),
+        ((8, 7), 2, 2),
+    ],
+)
+def test_center_sampling_rejects_cells_smaller_than_four_source_pixels(
+    image_size,
+    width,
+    height,
+):
+    image = Image.new("RGB", image_size, "#111515")
+
+    with pytest.raises(ValueError, match="at least 4 source pixels"):
+        sample_cell_centers(
+            image,
+            Image.new("L", image.size, 255),
+            width,
+            height,
+            load_palette(),
+        )
+
+
+def test_center_sampling_rejects_grid_box_smaller_than_declared_grid():
+    image = Image.new("RGB", (16, 16), "#111515")
+
+    with pytest.raises(ValueError, match="at least 4 source pixels"):
+        sample_cell_centers(
+            image,
+            Image.new("L", image.size, 255),
+            3,
+            2,
+            load_palette(),
+            grid_box=(4, 4, 6, 12),
+        )
