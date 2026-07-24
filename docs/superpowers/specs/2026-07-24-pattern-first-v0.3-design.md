@@ -123,6 +123,13 @@ Nearest-neighbor logical-grid recovery is confidence-gated. A uniform image,
 anti-aliased image, or raster with multiple equally valid logical scales must
 raise an ambiguity error. Explicit logical dimensions always win.
 
+Raster scale is not uniquely identifiable in general: a composite scale such as
+`4x` can also be represented as `2x` with repeated logical cells. Automatic
+recovery therefore succeeds only when exactly one nontrivial integer scale
+passes byte-for-byte downsample/re-expansion validation. Normal Agent workflows
+should provide verified logical dimensions; recovery is a conservative
+convenience, not an authority.
+
 ### Pattern sizing and board layout
 
 Replace board-first selection with two operations:

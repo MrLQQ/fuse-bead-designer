@@ -251,9 +251,11 @@ Assert:
 - `finished-bead-photo`: raises unless `rectified_grid=True`;
 - rectified finished-bead input uses center sampling and no cleanup.
 
-Assert nearest-neighbor recovery accepts a known `16 x 16` logical image scaled
-by `4`, but raises an actionable ambiguity error for uniform, anti-aliased, or
-equally valid scale inputs. Explicit `--width` and `--height` always win.
+Assert nearest-neighbor recovery accepts a known logical image scaled by a
+prime factor such as `5` when it is the only valid nontrivial scale. A `4x`
+raster is ambiguous because `2x` and `4x` can both byte-for-byte re-expand it;
+uniform, anti-aliased, and multiply-valid inputs must raise an actionable
+ambiguity error. Explicit `--width` and `--height` always win.
 
 - [ ] **Step 2: Write exact-grid sampling tests and verify RED**
 
