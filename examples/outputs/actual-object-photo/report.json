@@ -11,12 +11,40 @@
   "classification": "high-resolution-image",
   "cleanup_changes": [
     [
-      34,
+      35,
       10
+    ],
+    [
+      32,
+      11
+    ],
+    [
+      29,
+      12
+    ],
+    [
+      29,
+      13
+    ],
+    [
+      26,
+      14
+    ],
+    [
+      27,
+      14
     ],
     [
       24,
       15
+    ],
+    [
+      21,
+      16
+    ],
+    [
+      23,
+      16
     ]
   ],
   "inferred_cells": [],
@@ -43,7 +71,8 @@
     "source": "generic"
   },
   "removed_interference": [
-    "studio-background"
+    "studio-background",
+    "studio-shadow"
   ],
   "verification": "verified",
   "warnings": []

@@ -1,9 +1,10 @@
 Provenance
 ==========
 
-Generated and edited with the built-in OpenAI image-generation tool on
-2026-07-24. Both images are original project fixtures; no third-party or user
-imagery was used.
+The source was generated with the built-in OpenAI image-generation tool on
+2026-07-24. It is an original project fixture; no third-party or user imagery
+was used. The clean intermediate was produced deterministically from that
+source by adding a transparency matte, not by regenerating the subject.
 
 Source: examples/inputs/actual-object-photo.png
 Clean intermediate: examples/intermediates/actual-object-photo-clean.png
@@ -24,36 +25,20 @@ Color palette: saturated red upper, clean white laces and rubber, warm-white bac
 Constraints: original imagery only; exactly one shoe; no person, foot, box, props, text, watermark, logo, extra object, grid, legend, counts, bead art, or final template.
 Avoid: floating shoe, dramatic reflections, busy background, recognizable trademark design, illustration or 3D-render appearance.
 
-Semantic-cleanup prompt
-=======================
+Deterministic cleanup
+=====================
 
-Use case: precise-object-edit
-Asset type: semantic-cleanup intermediate for a deterministic craft-pattern compiler
-Input images: Image 1: edit target, the original studio product photo of one unbranded red canvas sneaker
-Primary request: Flatten only the warm-white studio background to uniform pure white and remove the soft studio grounding shadow. Preserve the complete real shoe subject without reconstructing, reshaping, restyling, or inventing any part.
-Subject invariants: keep exactly the same red canvas silhouette, toe orientation, heel, tongue, opening, white laces, eyelets, white rubber toe cap, sidewall, outsole, construction seams, color blocks, textures, proportions, camera angle, crop, and scale.
-Composition/framing: preserve the original centered three-quarter side profile and generous margin.
-Constraints: change only the background and grounding shadow; no subject reconstruction; no added or removed shoe details; no text, watermark, logo, grid lines, legend, counts, border, UI, beads, bead pattern, or final template.
-Avoid: altering the laces, sole, red upper, contours, materials, perspective, or lighting on the shoe.
-Output intent: a clean source image only; the deterministic compiler, not the image model, will generate the grid and quantities.
-
-Targeted background-correction prompt
-=====================================
-
-The first cleanup left a faint studio tint that the deterministic compiler
-correctly exposed as disconnected background beads. The final clean
-intermediate was produced with this one targeted follow-up:
-
-Use case: precise-object-edit
-Asset type: corrected semantic-cleanup intermediate for a deterministic craft-pattern compiler
-Input images: Image 1: edit target, a cleaned studio product photo of one unbranded red canvas sneaker
-Primary request: Remove the remaining extremely faint beige-gray studio shadow and tint below and to the left of the sneaker. Make every background area outside the shoe uniformly pure white (#FFFFFF), including the full lower-left quadrant and the area under the sole.
-Subject invariants: preserve the sneaker exactly as shown: same complete red canvas silhouette, toe orientation, heel, tongue, opening, white laces, eyelets, white rubber toe cap, sidewall, outsole, seams, color blocks, texture, proportions, camera angle, framing, crop, and scale. Do not reconstruct or modify any part of the shoe.
-Constraints: change only residual background tint and shadow; absolutely no cast shadow, contact shadow, gray haze, beige tint, floor plane, gradient, or texture outside the shoe; no text, watermark, logo, grid lines, legend, counts, border, UI, beads, bead pattern, or final template.
-Output intent: a clean source image only; the deterministic compiler, not the image model, will generate the grid and quantities.
+The clean intermediate preserves the source RGB values byte-for-byte for every
+occupied pixel. A conservative alpha matte separates the visible shoe from the
+studio background and grounding shadow. Foreground evidence comes from the
+original image's saturation and value channels, is constrained to the visible
+shoe silhouette, and fills enclosed white regions such as the laces, toe cap,
+sidewall, and outsole. No image model was used for cleanup and no subject pixel
+was repainted.
 
 Verification note
 =================
 
-No hidden subject area required reconstruction; the cleanup was restricted to
-the studio background and shadow. The deterministic compilation is `verified`.
+The shoe is fully visible, so no hidden area required reconstruction. The
+compiler now retains the principal red, warm-white, and tan color blocks. The
+deterministic compilation is `verified`.

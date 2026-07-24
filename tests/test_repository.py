@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from PIL import Image, ImageChops
+
 
 def test_chinese_readme_is_primary():
     chinese = Path("README.md").read_text(encoding="utf-8")
@@ -93,3 +95,25 @@ def test_gallery_counts_are_compiler_consistent():
         output = Path("examples/outputs") / name
         pattern = json.loads((output / "pattern.json").read_text(encoding="utf-8"))
         assert pattern["total_beads"] == sum(pattern["color_counts"].values())
+
+
+def test_verified_object_cutout_preserves_source_pixels_and_white_details():
+    with Image.open("examples/inputs/actual-object-photo.png") as opened:
+        source = opened.convert("RGB")
+    with Image.open("examples/intermediates/actual-object-photo-clean.png") as opened:
+        cutout = opened.convert("RGBA")
+
+    alpha = cutout.getchannel("A")
+    assert cutout.size == source.size
+    assert alpha.getbbox() is not None
+
+    empty = Image.new("RGB", source.size)
+    source_subject = Image.composite(source, empty, alpha)
+    cutout_subject = Image.composite(cutout.convert("RGB"), empty, alpha)
+    assert ImageChops.difference(source_subject, cutout_subject).getbbox() is None
+
+    output = Path("examples/outputs/actual-object-photo")
+    pattern = json.loads((output / "pattern.json").read_text(encoding="utf-8"))
+    report = json.loads((output / "report.json").read_text(encoding="utf-8"))
+    assert pattern["color_counts"]["warm-white"] > 0
+    assert report["verification"] == "verified"
