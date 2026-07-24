@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "width",
+    "height",
+    "module_size",
+    "board_layout",
+    "palette",
+    "cells",
+    "total_beads",
+    "color_counts",
+    "verification",
+    "inferred_cells",
+    "settings"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": 1},
+    "width": {"type": "integer", "minimum": 1},
+    "height": {"type": "integer", "minimum": 1},
+    "module_size": {"type": "integer", "minimum": 1},
+    "board_layout": {
+      "type": "object",
+      "required": ["columns", "rows", "is_custom_size"],
+      "additionalProperties": false,
+      "properties": {
+        "columns": {"type": "integer", "minimum": 1},
+        "rows": {"type": "integer", "minimum": 1},
+        "is_custom_size": {"type": "boolean"}
+      }
+    },
+    "palette": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "name_zh", "hex", "brand_code"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string"},
+          "name": {"type": "string"},
+          "name_zh": {"type": "string"},
+          "hex": {"type": "string"},
+          "brand_code": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "cells": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {"type": ["string", "null"]}
+      }
+    },
+    "total_beads": {"type": "integer", "minimum": 0},
+    "color_counts": {
+      "type": "object",
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    },
+    "verification": {
+      "enum": ["verified", "inferred-low", "review-required"]
+    },
+    "inferred_cells": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": {"type": "integer", "minimum": 0}
+      }
+    },
+    "settings": {"type": "object"}
+  }
+}
