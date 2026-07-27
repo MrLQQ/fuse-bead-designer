@@ -316,6 +316,11 @@ def test_compile_report_serializes_exact_route_provenance_without_renaming_legac
         },
         source_input="source.png",
         compiled_input="source.png",
+        fidelity={
+            "grid": {"status": "declared"},
+            "color": {"status": "exact"},
+            "semantic": {"status": "verified"},
+        },
     )
 
     data = report.to_dict()
@@ -329,3 +334,8 @@ def test_compile_report_serializes_exact_route_provenance_without_renaming_legac
     assert data["draft_used"] is False
     assert data["grid_evidence"]["source"] == "declared"
     assert data["source_input"] == data["compiled_input"] == "source.png"
+    assert data["fidelity"] == {
+        "grid": {"status": "declared"},
+        "color": {"status": "exact"},
+        "semantic": {"status": "verified"},
+    }

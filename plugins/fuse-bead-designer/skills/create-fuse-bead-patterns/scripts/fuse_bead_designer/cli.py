@@ -15,7 +15,7 @@ from .logical_grid import AmbiguousGridError, recover_nearest_neighbor_grid
 from .masking import derive_subject_mask
 from .models import CompileReport, Pattern, VerificationState
 from .palettes import load_palette
-from .quantize import sample_cell_centers, sample_cells
+from .quantize import SampledCell, limit_colors, sample_cell_centers, sample_cells
 from .routing import policy_for
 
 
@@ -41,7 +41,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--height", type=_positive_integer, metavar="CELLS")
     parser.add_argument("--max-boards", type=_positive_integer, default=4, metavar="COUNT")
     parser.add_argument("--palette", metavar="PATH", help="JSON or CSV palette path")
-    parser.add_argument("--colors", type=_color_limit, default=16, metavar="COUNT")
+    parser.add_argument("--colors", type=_color_limit, default=None, metavar="COUNT")
     parser.add_argument(
         "--verification",
         choices=[state.value for state in VerificationState],
@@ -161,6 +161,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "width": recovered.width,
                     "height": recovered.height,
                     "box": list(grid_box),
+                    "scale": recovered.scale,
+                    "area_factor": recovered.area_factor,
                 }
         else:
             selection = select_board(
@@ -185,35 +187,43 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         mask = derive_subject_mask(image)
         if exact_route and arguments.sampling == "center":
-            sampled_cells = sample_cell_centers(
+            full_color_cells = sample_cell_centers(
                 image,
                 mask,
                 selection.width,
                 selection.height,
                 palette,
-                color_limit=arguments.colors,
                 grid_box=grid_box,
             )
         elif exact_route:
             median_image = image.crop(grid_box) if grid_box is not None else image
             median_mask = mask.crop(grid_box) if grid_box is not None else mask
-            sampled_cells = sample_cells(
+            full_color_cells = sample_cells(
                 median_image,
                 median_mask,
                 selection.width,
                 selection.height,
                 palette,
-                color_limit=arguments.colors,
             )
         else:
-            sampled_cells = sample_cells(
+            full_color_cells = sample_cells(
                 image,
                 mask,
                 selection.width,
                 selection.height,
                 palette,
-                color_limit=arguments.colors,
             )
+        sampled_cells = limit_colors(full_color_cells, palette, arguments.colors)
+        fidelity = _fidelity(
+            image=image,
+            grid_box=grid_box,
+            selection=selection,
+            grid_evidence=grid_evidence,
+            before=full_color_cells,
+            after=sampled_cells,
+            color_limit=arguments.colors,
+            verification=VerificationState(arguments.verification),
+        )
         cleanup = (
             cleanup_cells(sampled_cells, protected_cells=frozenset(protected_cells))
             if arguments.cleanup
@@ -246,6 +256,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "draft_input": str(draft_path) if draft_path is not None else None,
                 "compiled_input": str(compiled_path),
                 "protected_cells": [list(cell) for cell in protected_cells],
+                "fidelity": fidelity,
             },
         )
         report = CompileReport(
@@ -256,6 +267,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "source": str(Path(arguments.palette)) if arguments.palette else "generic",
                 "color_limit": arguments.colors,
                 "color_ids": [color.id for color in palette],
+                "source_color_count": fidelity["color"]["source_color_count"],
+                "final_color_count": fidelity["color"]["final_color_count"],
+                "changed_cells": fidelity["color"]["changed_cells"],
             },
             cleanup_changes=cleanup.changed_cells,
             warnings=_warnings(selection, pattern.verification),
@@ -270,6 +284,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             source_input=str(source_path),
             draft_input=str(draft_path) if draft_path is not None else None,
             compiled_input=str(compiled_path),
+            fidelity=fidelity,
         )
         write_artifacts(pattern, output_dir, report=report)
     except (OSError, ValueError) as error:
@@ -305,10 +320,74 @@ def _color_limit(value: str) -> int:
     try:
         result = int(value)
     except ValueError as error:
-        raise argparse.ArgumentTypeError("--colors must be an integer from 8 through 16") from error
-    if not 8 <= result <= 16:
-        raise argparse.ArgumentTypeError("--colors must be an integer from 8 through 16")
+        raise argparse.ArgumentTypeError("--colors must be a positive integer") from error
+    if result <= 0:
+        raise argparse.ArgumentTypeError("--colors must be a positive integer")
     return result
+
+
+def _fidelity(
+    *,
+    image: Image.Image,
+    grid_box: tuple[int, int, int, int] | None,
+    selection: BoardSelection,
+    grid_evidence: dict[str, object],
+    before: list[list[SampledCell]],
+    after: list[list[SampledCell]],
+    color_limit: int | None,
+    verification: VerificationState,
+) -> dict[str, object]:
+    observed_box = grid_box or (0, 0, image.width, image.height)
+    source_ids = {
+        cell.color_id for row in before for cell in row if cell.occupied
+    }
+    final_ids = {
+        cell.color_id for row in after for cell in row if cell.occupied
+    }
+    changed_cells = sum(
+        original.color_id != final.color_id
+        for original_row, final_row in zip(before, after, strict=True)
+        for original, final in zip(original_row, final_row, strict=True)
+    )
+    exact_matches = all(
+        cell.distance == 0
+        for row in before
+        for cell in row
+        if cell.occupied
+    )
+    color_status = (
+        "reduced"
+        if changed_cells
+        else "exact"
+        if exact_matches
+        else "palette-mapped"
+    )
+    source = grid_evidence["source"]
+    return {
+        "grid": {
+            "status": (
+                "declared"
+                if source == "declared"
+                else "normalized"
+                if source == "nearest-neighbor"
+                else "sampled"
+            ),
+            "observed_width": observed_box[2] - observed_box[0],
+            "observed_height": observed_box[3] - observed_box[1],
+            "logical_width": selection.width,
+            "logical_height": selection.height,
+            "scale": grid_evidence.get("scale"),
+            "area_factor": grid_evidence.get("area_factor"),
+        },
+        "color": {
+            "status": color_status,
+            "limit": color_limit,
+            "source_color_count": len(source_ids),
+            "final_color_count": len(final_ids),
+            "changed_cells": changed_cells,
+        },
+        "semantic": {"status": verification.value},
+    }
 
 
 def _validate_paired_size(arguments: argparse.Namespace, parser: argparse.ArgumentParser) -> None:

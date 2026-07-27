@@ -55,7 +55,7 @@ def sample_cells(
     height: int,
     palette: list[PaletteColor],
     *,
-    color_limit: int = 16,
+    color_limit: int | None = None,
 ) -> list[list[SampledCell]]:
     """Sample *image* into a row-major grid of palette-assigned cells.
 
@@ -81,7 +81,7 @@ def sample_cells(
                 _sample_rectangle(image_pixels, mask_pixels, left, top, right, bottom, palette)
             )
         cells.append(output_row)
-    return _limit_colors(cells, palette, color_limit)
+    return limit_colors(cells, palette, color_limit)
 
 
 def sample_cell_centers(
@@ -91,7 +91,7 @@ def sample_cell_centers(
     height: int,
     palette: list[PaletteColor],
     *,
-    color_limit: int = 16,
+    color_limit: int | None = None,
     grid_box: tuple[int, int, int, int] | None = None,
 ) -> list[list[SampledCell]]:
     """Palette-map small center windows of declared logical cells.
@@ -128,7 +128,7 @@ def sample_cell_centers(
                 )
             )
         cells.append(output_row)
-    return _limit_colors(cells, palette, color_limit)
+    return limit_colors(cells, palette, color_limit)
 
 
 def _validate_inputs(
@@ -146,7 +146,11 @@ def _validate_inputs(
     for name, value in (("width", width), ("height", height)):
         if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
             raise ValueError(f"{name} must be a positive integer")
-    if not isinstance(color_limit, int) or isinstance(color_limit, bool) or color_limit <= 0:
+    if color_limit is not None and (
+        not isinstance(color_limit, int)
+        or isinstance(color_limit, bool)
+        or color_limit <= 0
+    ):
         raise ValueError("color_limit must be a positive integer")
     if not isinstance(palette, list) or not palette:
         raise ValueError("palette must contain at least one color")
@@ -234,11 +238,13 @@ def _sample_rectangle(
     return SampledCell(True, match.color_id, match.distance, source_rgb)
 
 
-def _limit_colors(
+def limit_colors(
     cells: list[list[SampledCell]],
     palette: list[PaletteColor],
-    color_limit: int,
+    color_limit: int | None,
 ) -> list[list[SampledCell]]:
+    if color_limit is None:
+        return cells
     counts = Counter(cell.color_id for row in cells for cell in row if cell.occupied)
     if len(counts) <= color_limit:
         return cells

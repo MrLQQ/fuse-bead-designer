@@ -19,6 +19,10 @@ SEMANTIC_MULTI_SIZE_REFERENCE = Path(
     "plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/"
     "references/semantic-multi-size.md"
 )
+FIDELITY_RESOURCE_REFERENCE = Path(
+    "plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/"
+    "references/fidelity-resource-normalization.md"
+)
 
 
 def test_pattern_skill_checks_updates_without_blocking_generation():
@@ -85,6 +89,23 @@ def test_standalone_update_stops_before_writes_without_transaction_safety():
     assert safety_gate in contract
     assert unavailable_path in contract
     assert "Never leave a changed standalone Skill unverified." in contract
+
+
+def test_pattern_skill_requires_semantic_grid_and_fidelity_first_color_gates():
+    skill = CREATE_SKILL.read_text(encoding="utf-8")
+    reference = FIDELITY_RESOURCE_REFERENCE.read_text(encoding="utf-8")
+    contract = " ".join(f"{skill}\n{reference}".split())
+
+    for phrase in (
+        "fidelity-resource-normalization.md",
+        "smallest provable semantic grid",
+        "Do not pass `--colors` for the baseline",
+        "board layout cannot resize the pattern",
+        "grid fidelity, color fidelity, and semantic fidelity",
+        "3 × 3",
+        "nine times",
+    ):
+        assert phrase.lower() in contract.lower()
 
 
 def test_chinese_readme_is_primary():

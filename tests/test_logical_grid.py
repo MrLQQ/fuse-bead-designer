@@ -29,6 +29,8 @@ def test_recovers_provable_integer_nearest_neighbor_grid():
     assert spec.box == (0, 0, 80, 80)
     assert spec.source == "nearest-neighbor"
     assert spec.confidence == 1.0
+    assert spec.scale == 5
+    assert spec.area_factor == 25
 
 
 @pytest.mark.parametrize(
@@ -59,14 +61,31 @@ def test_recovery_rejects_inconsistent_axis_evidence():
         recover_nearest_neighbor_grid(image)
 
 
-def test_recovery_rejects_plain_composite_scale_with_multiple_valid_factors():
+def test_recovery_uses_largest_byte_perfect_composite_scale():
     display = _checkerboard(4, 4).resize((16, 16), Image.Resampling.NEAREST)
 
-    with pytest.raises(AmbiguousGridError, match="declare"):
-        recover_nearest_neighbor_grid(display)
+    spec = recover_nearest_neighbor_grid(display)
+
+    assert (spec.width, spec.height) == (4, 4)
+    assert spec.scale == 4
+    assert spec.area_factor == 16
 
 
-def test_recovery_rejects_adjacent_duplicate_logical_rows_and_columns():
+def test_recovery_collapses_globally_repeated_three_by_three_semantic_pixels():
+    logical = Image.new("RGB", (35, 34), "#111515")
+    for y in range(4, 30):
+        for x in range(7, 28):
+            logical.putpixel((x, y), (229, 57, 53))
+    display = logical.resize((105, 102), Image.Resampling.NEAREST)
+
+    spec = recover_nearest_neighbor_grid(display)
+
+    assert (spec.width, spec.height) == (35, 34)
+    assert spec.scale == 3
+    assert spec.area_factor == 9
+
+
+def test_recovery_collapses_adjacent_duplicate_logical_rows_and_columns():
     base = _checkerboard(4, 4)
     duplicated = Image.new("RGB", (8, 8))
     source_columns = [index // 2 for index in range(8)]
@@ -76,5 +95,7 @@ def test_recovery_rejects_adjacent_duplicate_logical_rows_and_columns():
             duplicated.putpixel((x, y), base.getpixel((source_x, source_y)))
     display = duplicated.resize((32, 32), Image.Resampling.NEAREST)
 
-    with pytest.raises(AmbiguousGridError, match="declare"):
-        recover_nearest_neighbor_grid(display)
+    spec = recover_nearest_neighbor_grid(display)
+
+    assert (spec.width, spec.height) == (4, 4)
+    assert spec.scale == 8

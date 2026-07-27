@@ -60,3 +60,14 @@ The generic matrix must cover **people or animals**, **objects**, **text or
 logos**, **buildings or landscapes**, **plants or abstract art**, and
 **occluded finished-bead photos**. Each fixture gets its own hard/soft feature
 contract; no category inherits a human-face checklist.
+
+## H. Repeated-grid and rare-color resource regression
+
+The supplied rectified pattern is a 105 × 102 observed grid whose semantic
+pixels are globally repeated 3 × 3. Its supplied palette contains 21 used
+colors, including five rare single-cell accents.
+
+Expected behavior: recover the 35 × 34 semantic grid, derive boards afterward,
+and preserve all 21 colors in the baseline. Do not pass `--colors` unless the
+request explicitly asks for a reduced-color variant. Report the 9× area
+normalization and separate grid, color, and semantic fidelity.

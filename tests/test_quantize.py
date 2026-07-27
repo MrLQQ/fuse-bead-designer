@@ -88,7 +88,7 @@ def test_color_limit_validates_and_uses_palette_id_ties_then_nearest_remap():
         sample_cells(image, mask, 1, 1, palette, color_limit=True)
 
 
-def test_default_color_limit_is_sixteen_for_a_larger_custom_palette():
+def test_default_quantization_preserves_every_mapped_custom_palette_color():
     colors = [f"#{value:02X}{value:02X}{value:02X}" for value in range(0, 256, 13)][:20]
     image = Image.new("RGB", (20, 1))
     image.putdata([rgb(color[1:]) for color in colors])
@@ -96,7 +96,7 @@ def test_default_color_limit_is_sixteen_for_a_larger_custom_palette():
 
     cells = sample_cells(image, Image.new("L", image.size, 255), 20, 1, palette)
 
-    assert len({cell.color_id for cell in cells[0] if cell.occupied}) == 16
+    assert len({cell.color_id for cell in cells[0] if cell.occupied}) == 20
 
 
 def test_center_sampling_preserves_declared_grid_empty_cells_and_highlight():

@@ -52,6 +52,28 @@ def read_pattern(output_dir):
     return json.loads((output_dir / "pattern.json").read_text(encoding="utf-8"))
 
 
+def write_grayscale_palette_subject(tmp_path, color_count=21):
+    palette = [
+        {
+            "id": f"c{index:02d}",
+            "name": f"Color {index}",
+            "name_zh": f"颜色 {index}",
+            "hex": f"#{index * 10:02X}{index * 10:02X}{index * 10:02X}",
+            "brand_code": f"M{index:03d}",
+        }
+        for index in range(color_count)
+    ]
+    palette_path = tmp_path / "palette.json"
+    palette_path.write_text(json.dumps(palette), encoding="utf-8")
+    subject_path = tmp_path / "subject.png"
+    image = Image.new("RGBA", (color_count, 1))
+    image.putdata(
+        [(index * 10, index * 10, index * 10, 255) for index in range(color_count)]
+    )
+    image.save(subject_path)
+    return palette_path, subject_path
+
+
 def test_cli_creates_all_verified_outputs_from_any_working_directory(tmp_path, clean_subject_path):
     output = tmp_path / "out"
 
@@ -363,7 +385,7 @@ def test_cli_preserves_explicit_exact_grid_dimensions_and_occupied_cells(tmp_pat
     }
     assert pattern["total_beads"] == 3
     assert pattern["settings"] == {
-        "colors": 16,
+        "colors": None,
         "max_boards": 4,
         "source_classification": "pixel-art",
         "sampling": "center",
@@ -381,6 +403,25 @@ def test_cli_preserves_explicit_exact_grid_dimensions_and_occupied_cells(tmp_pat
         "draft_input": None,
         "compiled_input": str(source),
         "protected_cells": [],
+        "fidelity": {
+            "grid": {
+                "status": "declared",
+                "observed_width": 272,
+                "observed_height": 240,
+                "logical_width": 68,
+                "logical_height": 60,
+                "scale": None,
+                "area_factor": None,
+            },
+            "color": {
+                "status": "exact",
+                "limit": None,
+                "source_color_count": 1,
+                "final_color_count": 1,
+                "changed_cells": 0,
+            },
+            "semantic": {"status": "verified"},
+        },
     }
     report = json.loads((output / "report.json").read_text(encoding="utf-8"))
     assert report["classification"] == "pixel-art"
@@ -418,6 +459,17 @@ def test_cli_recovers_unambiguous_exact_grid_dimensions(tmp_path):
         "width": 16,
         "height": 16,
         "box": [0, 0, 80, 80],
+        "scale": 5,
+        "area_factor": 25,
+    }
+    assert pattern["settings"]["fidelity"]["grid"] == {
+        "status": "normalized",
+        "observed_width": 80,
+        "observed_height": 80,
+        "logical_width": 16,
+        "logical_height": 16,
+        "scale": 5,
+        "area_factor": 25,
     }
 
 
@@ -500,12 +552,90 @@ def test_cli_accepts_rectified_finished_bead_photo(tmp_path, clean_subject_path)
     assert result.returncode == 0, result.stderr
 
 
-@pytest.mark.parametrize("colors", ["7", "17", "not-a-number"])
+@pytest.mark.parametrize("colors", ["0", "-1", "not-a-number"])
 def test_cli_rejects_invalid_color_limits(tmp_path, clean_subject_path, colors):
     result = run_cli(clean_subject_path, tmp_path / "out", "--colors", colors)
 
     assert result.returncode == 2
-    assert "--colors must be an integer from 8 through 16" in result.stderr
+    assert "--colors must be a positive integer" in result.stderr
+
+
+def test_cli_preserves_twenty_one_palette_colors_when_limit_is_omitted(tmp_path):
+    palette, subject = write_grayscale_palette_subject(tmp_path)
+    output = tmp_path / "out"
+
+    result = run_cli(
+        subject,
+        output,
+        "--classification",
+        "pixel-art",
+        "--width",
+        "21",
+        "--height",
+        "1",
+        "--palette",
+        str(palette),
+    )
+
+    assert result.returncode == 0, result.stderr
+    pattern = read_pattern(output)
+    assert len(pattern["color_counts"]) == 21
+    assert pattern["total_beads"] == 21
+    assert pattern["settings"]["colors"] is None
+    assert pattern["settings"]["fidelity"]["color"] == {
+        "status": "exact",
+        "limit": None,
+        "source_color_count": 21,
+        "final_color_count": 21,
+        "changed_cells": 0,
+    }
+
+
+def test_cli_only_reduces_colors_when_explicitly_requested(tmp_path):
+    palette, subject = write_grayscale_palette_subject(tmp_path)
+    output = tmp_path / "out"
+
+    result = run_cli(
+        subject,
+        output,
+        "--classification",
+        "pixel-art",
+        "--width",
+        "21",
+        "--height",
+        "1",
+        "--palette",
+        str(palette),
+        "--colors",
+        "16",
+    )
+
+    assert result.returncode == 0, result.stderr
+    pattern = read_pattern(output)
+    assert len(pattern["color_counts"]) == 16
+    assert pattern["total_beads"] == 21
+    assert pattern["settings"]["fidelity"]["color"] == {
+        "status": "reduced",
+        "limit": 16,
+        "source_color_count": 21,
+        "final_color_count": 16,
+        "changed_cells": 5,
+    }
+    report = json.loads((output / "report.json").read_text(encoding="utf-8"))
+    assert report["fidelity"] == pattern["settings"]["fidelity"]
+
+
+def test_cli_accepts_explicit_color_limit_above_sixteen(
+    tmp_path, clean_subject_path
+):
+    result = run_cli(
+        clean_subject_path,
+        tmp_path / "out",
+        "--colors",
+        "21",
+    )
+
+    assert result.returncode == 0, result.stderr
 
 
 def test_cli_refuses_unconfirmed_large_board(tmp_path, clean_subject_path):

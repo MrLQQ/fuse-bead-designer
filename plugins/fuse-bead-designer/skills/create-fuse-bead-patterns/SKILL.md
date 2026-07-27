@@ -20,6 +20,14 @@ model or a hand-written grid, is the sole source of truth for bead quantities.
 **Fix pattern dimensions before deriving board layout.** A 29-cell board is
 manufacturing metadata, never a target used to resample the art.
 
+**Normalize before optimizing.** Recover the smallest provable semantic grid,
+then preserve the baseline's mapped colors. Do not spend beads on a globally
+repeated display scale and do not reduce colors merely because they are rare.
+Read
+[fidelity-resource-normalization.md](references/fidelity-resource-normalization.md)
+before compiling pixel art, an existing pattern, or a rectified finished-bead
+grid.
+
 ## Delivery mode / 交付模式
 
 Use baseline-first delivery by default. Complete and deliver one practical
@@ -71,16 +79,19 @@ Perform these steps in order:
    the host cannot resolve it safely. Never treat a hand as beads.
 7. Verify the actual logical grid mechanically. Requested image dimensions and
    raster display dimensions are not grid evidence. Require declared logical
-   dimensions or unique nearest-neighbor recovery. Always fail on ambiguous grid recovery
+   dimensions or byte-perfect nearest-neighbor recovery of the smallest
+   provable semantic grid. A globally repeated display scale is normalization
+   evidence, not additional bead detail. Always fail on ambiguous grid recovery
    instead of treating display pixels as beads.
 8. Choose a practical bead budget that preserves every hard feature in the
    task-specific contract. Fix the logical pattern dimensions, then derive the
    29-cell board layout. Honor explicit user constraints, but do not force the
    pattern onto standard-board multiples.
 9. Select the palette. Use only a supplied brand/inventory palette when
-   provided; never invent brand codes. Read
-   [palette-format.md](references/palette-format.md) when making or using a
-   palette file.
+   provided; never invent brand codes. The baseline has no fixed color-count
+   limit. Do not pass `--colors` for the baseline unless the user explicitly
+   requested a color cap. Read [palette-format.md](references/palette-format.md)
+   when making or using a palette file.
 10. Run the bundled compiler yourself on the verified grid as described in
    **Internal execution**. Do not manually calculate, copy, or amend counts. For
    `pixel-art` and `pattern-draft`, singleton cleanup is disabled by default.
@@ -88,7 +99,8 @@ Perform these steps in order:
     Recheck every hard semantic feature before delivery. If the practical bead
     budget was missed or a hard feature was flattened, revise the draft/grid
     and compile again.
-12. Report artifact paths and the verification state. Use “confirmed” only for
+12. Report artifact paths and the verification state. State grid fidelity,
+    color fidelity, and semantic fidelity separately. Use “confirmed” only for
    `verified`; label `inferred-low` as provisional reconstruction and
    `review-required` quantities as provisional pending user confirmation. Read
    [output-format.md](references/output-format.md) for the delivery checklist.

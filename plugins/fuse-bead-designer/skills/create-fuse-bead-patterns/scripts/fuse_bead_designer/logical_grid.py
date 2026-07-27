@@ -15,6 +15,11 @@ class GridSpec:
     box: tuple[int, int, int, int]
     source: str
     confidence: float
+    scale: int
+
+    @property
+    def area_factor(self) -> int:
+        return self.scale * self.scale
 
 
 class AmbiguousGridError(ValueError):
@@ -25,8 +30,8 @@ def recover_nearest_neighbor_grid(image: Image.Image) -> GridSpec:
     """Recover a grid only from exact, regular nearest-neighbor evidence.
 
     Every nontrivial integer scale that divides both raster dimensions is
-    tested. Exactly one scale must reproduce the raster byte-for-byte after
-    nearest-neighbor reduction and re-expansion.
+    tested. The largest square scale that reproduces the raster byte-for-byte
+    is the smallest provable semantic grid.
     """
     if not isinstance(image, Image.Image):
         raise TypeError("image must be a Pillow Image")
@@ -35,12 +40,18 @@ def recover_nearest_neighbor_grid(image: Image.Image) -> GridSpec:
         raise _ambiguous()
 
     candidates = _valid_scale_candidates(image)
-    if len(candidates) != 1:
+    if not candidates:
         raise _ambiguous()
 
-    scale, logical = candidates[0]
-    if not _axis_supports_scale(image, scale, axis="x") or not _axis_supports_scale(
-        image, scale, axis="y"
+    scale, logical = max(candidates, key=lambda candidate: candidate[0])
+    x_factor = _axis_block_factor(image, axis="x")
+    y_factor = _axis_block_factor(image, axis="y")
+    if (
+        x_factor is None
+        or y_factor is None
+        or x_factor % scale
+        or y_factor % scale
+        or ((x_factor > scale) != (y_factor > scale))
     ):
         raise _ambiguous()
     raster_width, raster_height = image.size
@@ -52,6 +63,7 @@ def recover_nearest_neighbor_grid(image: Image.Image) -> GridSpec:
         box=(0, 0, raster_width, raster_height),
         source="nearest-neighbor",
         confidence=1.0,
+        scale=scale,
     )
 
 
@@ -80,7 +92,7 @@ def _valid_scale_candidates(image: Image.Image) -> list[tuple[int, Image.Image]]
     return candidates
 
 
-def _axis_supports_scale(image: Image.Image, scale: int, *, axis: str) -> bool:
+def _axis_block_factor(image: Image.Image, *, axis: str) -> int | None:
     width, height = image.size
     pixels = image.load()
     length = width if axis == "x" else height
@@ -97,7 +109,12 @@ def _axis_supports_scale(image: Image.Image, scale: int, *, axis: str) -> bool:
             for cross in range(cross_length)
         )
     ]
-    return transitions == list(range(scale, length, scale))
+    if not transitions:
+        return None
+    factor = length
+    for boundary in transitions:
+        factor = gcd(factor, boundary)
+    return factor
 
 
 def _nontrivial_divisors(value: int) -> list[int]:

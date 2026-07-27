@@ -163,6 +163,7 @@ class CompileReport:
     source_input: str | None = None
     draft_input: str | None = None
     compiled_input: str | None = None
+    fidelity: dict[str, object] | None = None
 
     def to_dict(self) -> dict[str, object]:
         data: dict[str, object] = {
@@ -187,6 +188,7 @@ class CompileReport:
                     "source_input": self.source_input,
                     "draft_input": self.draft_input,
                     "compiled_input": self.compiled_input,
+                    "fidelity": self.fidelity,
                 }
             )
         return data
