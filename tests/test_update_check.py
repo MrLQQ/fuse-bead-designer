@@ -1,4 +1,5 @@
 import ast
+import http.client
 import importlib.util
 import json
 import multiprocessing
@@ -287,6 +288,52 @@ def test_force_bypasses_a_recent_cache(tmp_path):
     assert result["latest_version"] == "v0.4.0"
 
 
+def test_force_ignores_corrupt_cache_and_fetches_fresh_result(tmp_path):
+    cache = tmp_path / "update.json"
+    cache.write_text("{bad json", encoding="utf-8")
+    calls = []
+
+    result = update_check.check_for_update(
+        POLICY_OBJECT,
+        cache,
+        now=101,
+        force=True,
+        fetcher=lambda repository, timeout: calls.append(repository) or ["v0.4.0"],
+    )
+
+    assert result["status"] == "update-available"
+    assert result["latest_version"] == "v0.4.0"
+    assert calls == ["MrLQQ/fuse-bead-designer"]
+
+
+def test_force_ignores_prior_version_cache_and_fetches_fresh_result(tmp_path):
+    cache = tmp_path / "update.json"
+    cache.write_text(
+        json.dumps(
+            {
+                "checked_at": 100,
+                "current_version": "0.3.0",
+                "latest_version": "v0.3.0",
+                "status": "up-to-date",
+            }
+        ),
+        encoding="utf-8",
+    )
+    calls = []
+
+    result = update_check.check_for_update(
+        POLICY_OBJECT,
+        cache,
+        now=101,
+        force=True,
+        fetcher=lambda repository, timeout: calls.append(repository) or ["v0.4.0"],
+    )
+
+    assert result["status"] == "update-available"
+    assert result["latest_version"] == "v0.4.0"
+    assert calls == ["MrLQQ/fuse-bead-designer"]
+
+
 def test_newer_stable_tag_returns_localized_confirmation(tmp_path):
     result = update_check.check_for_update(
         POLICY_OBJECT,
@@ -378,11 +425,66 @@ def test_unwritable_cache_returns_unavailable(tmp_path):
         ("Darwin", {}, Path("/Users/fuse"), Path("/Users/fuse/Library/Caches/fuse-bead-designer/update-check.json")),
         ("Linux", {"XDG_CACHE_HOME": "/var/cache/fuse"}, Path("/home/fuse"), Path("/var/cache/fuse/fuse-bead-designer/update-check.json")),
         ("Linux", {}, Path("/home/fuse"), Path("/home/fuse/.cache/fuse-bead-designer/update-check.json")),
+        ("Linux", {"XDG_CACHE_HOME": ""}, Path("/home/fuse"), Path("/home/fuse/.cache/fuse-bead-designer/update-check.json")),
         ("Windows", {"LOCALAPPDATA": "/local-app-data"}, Path("/Users/fuse"), Path("/local-app-data/fuse-bead-designer/update-check.json")),
+        ("Windows", {"LOCALAPPDATA": ""}, Path("/Users/fuse"), Path("/Users/fuse/AppData/Local/fuse-bead-designer/update-check.json")),
     ],
 )
 def test_default_cache_file_uses_platform_cache_location(system, environ, home, expected):
     assert update_check.default_cache_file(system, environ, home) == expected
+
+
+def test_cli_interrupted_http_read_prints_one_unavailable_json_object(
+    tmp_path, monkeypatch, capsys
+):
+    class InterruptedResponse:
+        def read(self):
+            raise http.client.IncompleteRead(b"partial", 10)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            return False
+
+    monkeypatch.setattr(
+        update_check.urllib.request,
+        "urlopen",
+        lambda request, timeout: InterruptedResponse(),
+    )
+
+    exit_code = update_check.main(
+        ["--cache-file", str(tmp_path / "update.json"), "--force"]
+    )
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert captured.err == ""
+    assert captured.out.count("\n") == 1
+    assert json.loads(captured.out)["status"] == "unavailable"
+
+
+@pytest.mark.parametrize("policy_data", [{}, []])
+def test_cli_invalid_policy_shape_prints_one_unavailable_json_object(
+    tmp_path, capsys, policy_data
+):
+    policy = tmp_path / "policy.json"
+    policy.write_text(json.dumps(policy_data), encoding="utf-8")
+
+    exit_code = update_check.main(
+        [
+            "--policy",
+            str(policy),
+            "--cache-file",
+            str(tmp_path / "update.json"),
+        ]
+    )
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert captured.err == ""
+    assert captured.out.count("\n") == 1
+    assert json.loads(captured.out)["status"] == "unavailable"
 
 
 def test_cli_cache_failure_prints_one_unavailable_json_object(tmp_path, capsys):

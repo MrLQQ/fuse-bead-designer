@@ -2,6 +2,7 @@
 
 import argparse
 from dataclasses import dataclass
+import http.client
 import json
 import os
 from pathlib import Path
@@ -35,12 +36,27 @@ class CacheLock:
 
 def load_policy(path: Path) -> UpdatePolicy:
     data = json.loads(path.read_text(encoding="utf-8"))
-    return UpdatePolicy(
-        repository=data["repository"],
-        current_version=data["current_version"],
-        stable_tag_pattern=data["stable_tag_pattern"],
-        check_interval_seconds=data["check_interval_seconds"],
-    )
+    if not isinstance(data, dict):
+        raise ValueError("update policy must be an object")
+    try:
+        policy = UpdatePolicy(
+            repository=data["repository"],
+            current_version=data["current_version"],
+            stable_tag_pattern=data["stable_tag_pattern"],
+            check_interval_seconds=data["check_interval_seconds"],
+        )
+    except KeyError as error:
+        raise ValueError("update policy is missing a required field") from error
+    if (
+        not isinstance(policy.repository, str)
+        or not isinstance(policy.current_version, str)
+        or policy.stable_tag_pattern != "vMAJOR.MINOR.PATCH"
+        or type(policy.check_interval_seconds) is not int
+        or policy.check_interval_seconds <= 0
+        or parse_stable_tag(f"v{policy.current_version}") is None
+    ):
+        raise ValueError("update policy has invalid field values")
+    return policy
 
 
 def parse_stable_tag(tag: str) -> tuple[int, int, int] | None:
@@ -65,9 +81,13 @@ def default_cache_file(
     if system == "Darwin":
         cache_dir = home / "Library" / "Caches"
     elif system == "Windows":
-        cache_dir = Path(environ.get("LOCALAPPDATA", str(home / "AppData" / "Local")))
+        local_app_data = environ.get("LOCALAPPDATA")
+        cache_dir = (
+            Path(local_app_data) if local_app_data else home / "AppData" / "Local"
+        )
     else:
-        cache_dir = Path(environ.get("XDG_CACHE_HOME", str(home / ".cache")))
+        xdg_cache_home = environ.get("XDG_CACHE_HOME")
+        cache_dir = Path(xdg_cache_home) if xdg_cache_home else home / ".cache"
     return cache_dir / "fuse-bead-designer" / "update-check.json"
 
 
@@ -285,7 +305,7 @@ def check_for_update(
     try:
         cached = read_cache(cache_file, policy)
         cache_error = False
-    except (OSError, ValueError, json.JSONDecodeError):
+    except (OSError, ValueError, http.client.HTTPException):
         cached = None
         cache_error = True
     if (
@@ -299,7 +319,7 @@ def check_for_update(
     if lock_file is None:
         try:
             cached = read_cache(cache_file, policy)
-        except (OSError, ValueError, json.JSONDecodeError):
+        except (OSError, ValueError, http.client.HTTPException):
             return unavailable_result(policy, now)
         if (
             not force
@@ -310,19 +330,19 @@ def check_for_update(
         return unavailable_result(policy, now)
 
     try:
-        if cache_error:
+        if cache_error and not force:
             return persist_or_unavailable(cache_file, unavailable_result(policy, now))
         try:
-            cached = read_cache(cache_file, policy)
-            if (
-                not force
-                and cached is not None
-                and now - int(cached["checked_at"]) < policy.check_interval_seconds
-            ):
-                return recent_result(policy, cached)
+            if not force:
+                cached = read_cache(cache_file, policy)
+                if (
+                    cached is not None
+                    and now - int(cached["checked_at"]) < policy.check_interval_seconds
+                ):
+                    return recent_result(policy, cached)
             latest = select_latest_stable(fetcher(policy.repository, timeout))
             result = compare_result(policy, latest, now)
-        except (OSError, TimeoutError, ValueError, json.JSONDecodeError):
+        except (OSError, ValueError, http.client.HTTPException):
             result = unavailable_result(policy, now)
         return persist_or_unavailable(cache_file, result)
     finally:
@@ -351,7 +371,7 @@ def main(argv: list[str] | None = None) -> int:
             force=arguments.force,
             timeout=arguments.timeout,
         )
-    except (OSError, TimeoutError, ValueError, json.JSONDecodeError):
+    except (OSError, ValueError, http.client.HTTPException):
         result = unavailable_result(
             policy or UpdatePolicy("", "", "", 0), now
         )
