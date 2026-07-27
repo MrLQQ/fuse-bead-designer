@@ -123,6 +123,76 @@ def test_concurrent_normal_checks_fetch_only_once_per_cache_interval(tmp_path):
     assert fetch_count.value == 1
 
 
+def test_live_lock_is_not_reclaimed_when_its_file_looks_stale(tmp_path):
+    if "fork" not in multiprocessing.get_all_start_methods():
+        pytest.skip("requires a fork-capable platform for real process contention")
+    context = multiprocessing.get_context("fork")
+    entered = context.Event()
+    release = context.Event()
+    fetch_count = context.Value("i", 0)
+    results = context.Queue()
+    cache = tmp_path / "update.json"
+    first = context.Process(
+        target=_run_blocked_update_check,
+        args=(cache, entered, release, fetch_count, results),
+    )
+    second = context.Process(
+        target=_run_blocked_update_check,
+        args=(cache, entered, release, fetch_count, results),
+    )
+
+    first.start()
+    try:
+        assert entered.wait(timeout=2)
+        update_check.os.utime(update_check.cache_lock_file(cache), (1, 1))
+        second.start()
+        second.join(timeout=2)
+        assert second.exitcode == 0
+        assert results.get(timeout=1)["status"] == "unavailable"
+        assert fetch_count.value == 1
+    finally:
+        release.set()
+        first.join(timeout=5)
+        if first.is_alive():
+            first.terminate()
+            first.join(timeout=2)
+        if second.is_alive():
+            second.terminate()
+            second.join(timeout=2)
+
+    assert first.exitcode == 0
+    assert results.get(timeout=1)["status"] == "up-to-date"
+    assert fetch_count.value == 1
+
+
+def test_windows_lock_backend_uses_nonblocking_byte_range_lock(tmp_path):
+    class FakeMsvcrt:
+        LK_NBLCK = 1
+        LK_UNLCK = 2
+
+        def __init__(self):
+            self.calls = []
+
+        def locking(self, descriptor, mode, length):
+            self.calls.append((descriptor, mode, length))
+
+    lock_file = tmp_path / "update.lock"
+    descriptor = update_check.os.open(
+        lock_file, update_check.os.O_CREAT | update_check.os.O_RDWR
+    )
+    backend = FakeMsvcrt()
+    try:
+        assert update_check.lock_windows(descriptor, backend)
+        update_check.unlock_windows(descriptor, backend)
+    finally:
+        update_check.os.close(descriptor)
+
+    assert [call[1:] for call in backend.calls] == [
+        (backend.LK_NBLCK, 1),
+        (backend.LK_UNLCK, 1),
+    ]
+
+
 @pytest.mark.parametrize(
     "cached",
     [

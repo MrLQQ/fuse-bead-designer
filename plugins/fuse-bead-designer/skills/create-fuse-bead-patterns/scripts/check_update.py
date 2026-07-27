@@ -16,7 +16,6 @@ import urllib.request
 STABLE_TAG = re.compile(r"^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 CACHE_FIELDS = ("checked_at", "current_version", "latest_version", "status")
 DEFAULT_POLICY_FILE = Path(__file__).resolve().parent.parent / "update-policy.json"
-LOCK_STALE_SECONDS = 60
 
 
 @dataclass(frozen=True)
@@ -25,6 +24,13 @@ class UpdatePolicy:
     current_version: str
     stable_tag_pattern: str
     check_interval_seconds: int
+
+
+@dataclass(frozen=True)
+class CacheLock:
+    path: Path
+    descriptor: int
+    system: str
 
 
 def load_policy(path: Path) -> UpdatePolicy:
@@ -120,37 +126,78 @@ def cache_lock_file(cache_file: Path) -> Path:
     return cache_file.with_name(f".{cache_file.name}.lock")
 
 
-def acquire_cache_lock(cache_file: Path) -> Path | None:
+def lock_posix(descriptor: int) -> bool:
+    import fcntl
+
+    try:
+        fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        return False
+    return True
+
+
+def unlock_posix(descriptor: int) -> None:
+    import fcntl
+
+    fcntl.flock(descriptor, fcntl.LOCK_UN)
+
+
+def lock_windows(descriptor: int, msvcrt_module: object | None = None) -> bool:
+    if msvcrt_module is None:
+        import msvcrt
+
+        msvcrt_module = msvcrt
+    os.lseek(descriptor, 0, os.SEEK_SET)
+    if os.fstat(descriptor).st_size == 0:
+        os.write(descriptor, b"0")
+    os.lseek(descriptor, 0, os.SEEK_SET)
+    try:
+        msvcrt_module.locking(descriptor, msvcrt_module.LK_NBLCK, 1)
+    except OSError:
+        return False
+    return True
+
+
+def unlock_windows(descriptor: int, msvcrt_module: object | None = None) -> None:
+    if msvcrt_module is None:
+        import msvcrt
+
+        msvcrt_module = msvcrt
+    os.lseek(descriptor, 0, os.SEEK_SET)
+    msvcrt_module.locking(descriptor, msvcrt_module.LK_UNLCK, 1)
+
+
+def acquire_cache_lock(cache_file: Path) -> CacheLock | None:
     lock_file = cache_lock_file(cache_file)
+    descriptor: int | None = None
     try:
         cache_file.parent.mkdir(parents=True, exist_ok=True)
-        while True:
-            try:
-                descriptor = os.open(
-                    lock_file, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600
-                )
-            except FileExistsError:
-                try:
-                    if time.time() - lock_file.stat().st_mtime <= LOCK_STALE_SECONDS:
-                        return None
-                    lock_file.unlink()
-                except FileNotFoundError:
-                    continue
-                continue
-            try:
-                os.write(descriptor, str(time.time()).encode("ascii"))
-            finally:
-                os.close(descriptor)
-            return lock_file
-    except OSError:
-        return None
-
-
-def release_cache_lock(lock_file: Path) -> None:
-    try:
-        lock_file.unlink()
+        descriptor = os.open(lock_file, os.O_CREAT | os.O_RDWR, 0o600)
+        system = os.name
+        locked = lock_windows(descriptor) if system == "nt" else lock_posix(descriptor)
+        if locked:
+            return CacheLock(lock_file, descriptor, system)
     except OSError:
         pass
+    if descriptor is not None:
+        try:
+            os.close(descriptor)
+        except OSError:
+            pass
+    return None
+
+
+def release_cache_lock(lock_file: CacheLock) -> None:
+    try:
+        if lock_file.system == "nt":
+            unlock_windows(lock_file.descriptor)
+        else:
+            unlock_posix(lock_file.descriptor)
+    finally:
+        try:
+            os.close(lock_file.descriptor)
+        except OSError:
+            pass
 
 
 def unavailable_result(policy: UpdatePolicy, now: int) -> dict[str, object]:
