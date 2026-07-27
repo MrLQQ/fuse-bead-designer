@@ -16,6 +16,7 @@ import urllib.request
 STABLE_TAG = re.compile(r"^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 CACHE_FIELDS = ("checked_at", "current_version", "latest_version", "status")
 DEFAULT_POLICY_FILE = Path(__file__).resolve().parent.parent / "update-policy.json"
+LOCK_STALE_SECONDS = 60
 
 
 @dataclass(frozen=True)
@@ -84,16 +85,72 @@ def fetch_github_tags(repository: str, timeout: float) -> list[str]:
     return tags
 
 
-def read_cache(cache_file: Path) -> dict[str, object] | None:
+def read_cache(cache_file: Path, policy: UpdatePolicy) -> dict[str, object] | None:
     try:
         data = json.loads(cache_file.read_text(encoding="utf-8"))
     except FileNotFoundError:
         return None
-    if not isinstance(data, dict) or set(data) - set(CACHE_FIELDS):
+    if not isinstance(data, dict) or set(data) != set(CACHE_FIELDS):
         raise ValueError("invalid update cache")
-    if not isinstance(data.get("checked_at"), int):
+    if type(data["checked_at"]) is not int or data["checked_at"] < 0:
         raise ValueError("invalid update cache timestamp")
+    if data["current_version"] != policy.current_version:
+        raise ValueError("invalid update cache version")
+    current = parse_stable_tag(f"v{policy.current_version}")
+    latest = data["latest_version"]
+    status = data["status"]
+    if current is None:
+        raise ValueError("invalid policy version")
+    if status == "unavailable":
+        if latest is not None:
+            raise ValueError("invalid unavailable update cache")
+    elif status in ("up-to-date", "update-available"):
+        if not isinstance(latest, str) or (latest_version := parse_stable_tag(latest)) is None:
+            raise ValueError("invalid update cache latest version")
+        if status == "up-to-date" and latest_version > current:
+            raise ValueError("invalid up-to-date update cache")
+        if status == "update-available" and latest_version <= current:
+            raise ValueError("invalid available update cache")
+    else:
+        raise ValueError("invalid update cache status")
     return data
+
+
+def cache_lock_file(cache_file: Path) -> Path:
+    return cache_file.with_name(f".{cache_file.name}.lock")
+
+
+def acquire_cache_lock(cache_file: Path) -> Path | None:
+    lock_file = cache_lock_file(cache_file)
+    try:
+        cache_file.parent.mkdir(parents=True, exist_ok=True)
+        while True:
+            try:
+                descriptor = os.open(
+                    lock_file, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600
+                )
+            except FileExistsError:
+                try:
+                    if time.time() - lock_file.stat().st_mtime <= LOCK_STALE_SECONDS:
+                        return None
+                    lock_file.unlink()
+                except FileNotFoundError:
+                    continue
+                continue
+            try:
+                os.write(descriptor, str(time.time()).encode("ascii"))
+            finally:
+                os.close(descriptor)
+            return lock_file
+    except OSError:
+        return None
+
+
+def release_cache_lock(lock_file: Path) -> None:
+    try:
+        lock_file.unlink()
+    except OSError:
+        pass
 
 
 def unavailable_result(policy: UpdatePolicy, now: int) -> dict[str, object]:
@@ -179,18 +236,50 @@ def check_for_update(
     timeout: float = 2.0,
 ) -> dict[str, object]:
     try:
-        cached = read_cache(cache_file)
+        cached = read_cache(cache_file, policy)
+        cache_error = False
+    except (OSError, ValueError, json.JSONDecodeError):
+        cached = None
+        cache_error = True
+    if (
+        not force
+        and cached is not None
+        and now - int(cached["checked_at"]) < policy.check_interval_seconds
+    ):
+        return recent_result(policy, cached)
+
+    lock_file = acquire_cache_lock(cache_file)
+    if lock_file is None:
+        try:
+            cached = read_cache(cache_file, policy)
+        except (OSError, ValueError, json.JSONDecodeError):
+            return unavailable_result(policy, now)
         if (
             not force
             and cached is not None
             and now - int(cached["checked_at"]) < policy.check_interval_seconds
         ):
             return recent_result(policy, cached)
-        latest = select_latest_stable(fetcher(policy.repository, timeout))
-        result = compare_result(policy, latest, now)
-    except (OSError, TimeoutError, ValueError, json.JSONDecodeError):
-        result = unavailable_result(policy, now)
-    return persist_or_unavailable(cache_file, result)
+        return unavailable_result(policy, now)
+
+    try:
+        if cache_error:
+            return persist_or_unavailable(cache_file, unavailable_result(policy, now))
+        try:
+            cached = read_cache(cache_file, policy)
+            if (
+                not force
+                and cached is not None
+                and now - int(cached["checked_at"]) < policy.check_interval_seconds
+            ):
+                return recent_result(policy, cached)
+            latest = select_latest_stable(fetcher(policy.repository, timeout))
+            result = compare_result(policy, latest, now)
+        except (OSError, TimeoutError, ValueError, json.JSONDecodeError):
+            result = unavailable_result(policy, now)
+        return persist_or_unavailable(cache_file, result)
+    finally:
+        release_cache_lock(lock_file)
 
 
 def build_parser() -> argparse.ArgumentParser:

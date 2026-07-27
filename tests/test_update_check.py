@@ -1,6 +1,7 @@
 import ast
 import importlib.util
 import json
+import multiprocessing
 from pathlib import Path
 import sys
 
@@ -23,6 +24,21 @@ POLICY_OBJECT = update_check.UpdatePolicy(
     stable_tag_pattern="vMAJOR.MINOR.PATCH",
     check_interval_seconds=86400,
 )
+
+
+def _run_blocked_update_check(cache, entered, release, fetch_count, results):
+    def fetcher(repository, timeout):
+        with fetch_count.get_lock():
+            fetch_count.value += 1
+        entered.set()
+        release.wait(timeout=5)
+        return ["v0.3.1"]
+
+    results.put(
+        update_check.check_for_update(
+            POLICY_OBJECT, cache, now=400, fetcher=fetcher
+        )
+    )
 
 
 def test_select_latest_stable_is_numeric_and_ignores_non_stable_tags():
@@ -64,6 +80,89 @@ def test_recent_cache_skips_fetch(tmp_path):
 
     assert result["status"] == "recent"
     assert calls == []
+
+
+def test_concurrent_normal_checks_fetch_only_once_per_cache_interval(tmp_path):
+    if "fork" not in multiprocessing.get_all_start_methods():
+        pytest.skip("requires a fork-capable platform for real process contention")
+    context = multiprocessing.get_context("fork")
+    entered = context.Event()
+    release = context.Event()
+    fetch_count = context.Value("i", 0)
+    results = context.Queue()
+    cache = tmp_path / "update.json"
+    first = context.Process(
+        target=_run_blocked_update_check,
+        args=(cache, entered, release, fetch_count, results),
+    )
+    second = context.Process(
+        target=_run_blocked_update_check,
+        args=(cache, entered, release, fetch_count, results),
+    )
+
+    first.start()
+    try:
+        assert entered.wait(timeout=2)
+        second.start()
+        second.join(timeout=2)
+        assert second.exitcode == 0
+        assert results.get(timeout=1)["status"] == "unavailable"
+        assert fetch_count.value == 1
+    finally:
+        release.set()
+        first.join(timeout=5)
+        if first.is_alive():
+            first.terminate()
+            first.join(timeout=2)
+        if second.is_alive():
+            second.terminate()
+            second.join(timeout=2)
+
+    assert first.exitcode == 0
+    assert results.get(timeout=1)["status"] == "up-to-date"
+    assert fetch_count.value == 1
+
+
+@pytest.mark.parametrize(
+    "cached",
+    [
+        {
+            "checked_at": 100,
+            "current_version": "0.3.1",
+            "latest_version": "v0.3.1-rc.1",
+            "status": "up-to-date",
+        },
+        {
+            "checked_at": 100,
+            "current_version": "0.3.1",
+            "latest_version": "v0.4.0",
+            "status": "up-to-date",
+        },
+        {
+            "checked_at": 100,
+            "current_version": "0.3.1",
+            "latest_version": "v0.3.1",
+            "status": "recent",
+        },
+    ],
+)
+def test_corrupt_cache_never_returns_a_malformed_recent_result(tmp_path, cached):
+    cache = tmp_path / "update.json"
+    cache.write_text(json.dumps(cached), encoding="utf-8")
+
+    result = update_check.check_for_update(
+        POLICY_OBJECT,
+        cache,
+        now=101,
+        fetcher=lambda repository, timeout: pytest.fail("must not fetch after cache corruption"),
+    )
+
+    assert result == {
+        "status": "unavailable",
+        "current_version": "0.3.1",
+        "latest_version": None,
+        "checked_at": 101,
+    }
 
 
 def test_exact_interval_boundary_fetches_again(tmp_path):
