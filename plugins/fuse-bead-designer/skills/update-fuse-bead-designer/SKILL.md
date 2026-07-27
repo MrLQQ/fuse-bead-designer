@@ -54,9 +54,15 @@ commands.
    `MrLQQ/fuse-bead-designer --ref <old-stable-tag>`, reinstalling this Plugin,
    and verifying the installed version again. Report a rollback failure plainly.
    In other words: restore the previous stable tag before reporting failure.
-4. On a standalone host, use only its native Skill manager to replace this
-   standalone Skill from the confirmed target. Do not substitute Codex CLI
-   commands or claim verification that the host cannot expose.
+4. Before any standalone write, require the host's native manager to record the
+   exact installed version and corresponding old stable ref, install only the
+   confirmed exact target, mechanically verify the installed target, and
+   restore the old stable ref after any install or verification failure.
+   Mechanically verify the restored old version before stopping. If any native
+   capture, scoped install, mechanical verification, or rollback capability is
+   missing, stop before writes and provide only bounded manual installation
+   guidance. Never leave a changed standalone Skill unverified. Do not
+   substitute Codex CLI commands on a standalone host.
 
 Do not run examples, create a virtual environment, install pattern-generation
 dependencies, or perform another Plugin update. After either verified success

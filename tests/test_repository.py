@@ -19,11 +19,19 @@ UPDATE_REFERENCE = Path(
 
 def test_pattern_skill_checks_updates_without_blocking_generation():
     skill = CREATE_SKILL.read_text(encoding="utf-8")
+    contract = " ".join(skill.split())
 
     assert "scripts/check_update.py" in skill
     assert "Do not use `--force` during ordinary pattern generation." in skill
-    assert "Only surface `update-available`" in skill
-    assert "continue the pattern task" in skill
+    assert (
+        "Only surface `update-available` as a concise notice with its returned "
+        "versioned confirmation prompt in the final response; discard `recent`, "
+        "`up-to-date`, and `unavailable`."
+    ) in contract
+    assert (
+        "If the command cannot run or its output is unusable, discard it and "
+        "continue the pattern task."
+    ) in contract
 
 
 def test_update_skill_requires_confirmation_verification_and_rollback():
@@ -50,6 +58,29 @@ def test_update_reference_defines_statuses_interval_and_host_boundary():
     assert "24-hour" in reference
     assert "standalone" in reference
     assert "Do not bypass host permission prompts." in reference
+
+
+def test_standalone_update_stops_before_writes_without_transaction_safety():
+    skill = UPDATE_SKILL.read_text(encoding="utf-8")
+    reference = UPDATE_REFERENCE.read_text(encoding="utf-8")
+    contract = " ".join(f"{skill}\n{reference}".split())
+
+    safety_gate = (
+        "Before any standalone write, require the host's native manager to "
+        "record the exact installed version and corresponding old stable ref, "
+        "install only the confirmed exact target, mechanically verify the "
+        "installed target, and restore the old stable ref after any install "
+        "or verification failure."
+    )
+    unavailable_path = (
+        "If any native capture, scoped install, mechanical verification, or "
+        "rollback capability is missing, stop before writes and provide only "
+        "bounded manual installation guidance."
+    )
+
+    assert safety_gate in contract
+    assert unavailable_path in contract
+    assert "Never leave a changed standalone Skill unverified." in contract
 
 
 def test_chinese_readme_is_primary():

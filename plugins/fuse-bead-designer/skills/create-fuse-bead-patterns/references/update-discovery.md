@@ -23,11 +23,20 @@ Route a specific check, update request, or exact confirmation to
 write authorization: after a fresh check, ask for the returned sentence, such
 as `确认更新到 v0.4.0`.
 
-On Codex, use its Plugin manager only. On a standalone compatible host, use
-that host's native Skill manager to replace only this standalone Skill from the
-confirmed exact stable release. Do not use Codex commands on a standalone
-host, and do not claim an update is possible if the host exposes no native
-installer.
+On Codex, use its Plugin manager only. Before any standalone write, require the
+host's native manager to record the exact installed version and corresponding
+old stable ref, install only the confirmed exact target, mechanically verify
+the installed target, and restore the old stable ref after any install or
+verification failure. Mechanically verify the restored old version before
+stopping.
+
+If any native capture, scoped install, mechanical verification, or rollback
+capability is missing, stop before writes and provide only bounded manual
+installation guidance. Name the confirmed tag, this standalone Skill, and the
+missing host capability; direct the user to the host's documented exact-release
+installation flow without inventing commands. Do not perform a partial
+replacement. Never leave a changed standalone Skill unverified. Do not use
+Codex commands on a standalone host.
 
 Confirmation authorizes only this Plugin or standalone Skill. It never
 authorizes bypassing filesystem, network, or host safety approvals. Do not bypass host permission prompts.
