@@ -8,7 +8,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 PLUGIN = ROOT / "plugins" / "fuse-bead-designer"
 SKILL = PLUGIN / "skills" / "create-fuse-bead-patterns"
 IGNORED_PARTS = frozenset({"__pycache__", ".DS_Store", "work", ".worktrees"})

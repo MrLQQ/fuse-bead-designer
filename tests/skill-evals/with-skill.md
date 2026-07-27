@@ -51,6 +51,20 @@ model.
 | --- | --- | --- |
 | Installation-only first use | Permission-aware Marketplace and Plugin installation; stop boundary | Complete only installation, then remind the user to start a new task; do not clone, run examples, create a virtual environment, or install runtime dependencies. |
 
+## Update-discovery pass rubric
+
+Run these scenarios in fresh contexts. The checker and update Skill may use
+their normal host integration, but no scenario may turn an ambiguous request
+into a write.
+
+| Public scenario | Required evidence | Pass condition |
+| --- | --- | --- |
+| Ordinary pattern generation | `recent` or `up-to-date` checker result; normal compiler delivery | Do not surface an update message or delay the pattern result. |
+| Available update notice | `update-available` result and the returned versioned confirmation sentence | Finish the requested pattern work, then show a concise notice; do not install, remove, or rebind anything. |
+| Offline update checking | `unavailable` checker result | Continue the requested pattern work without an update notice and without a failed-check error presented as a blocker. |
+| Unconfirmed update request | Fresh stable-version check and an exact returned confirmation sentence | A generic update request makes no writes; ask for the exact returned sentence for the current stable version. |
+| Confirmed exact stable version update | Exact returned confirmation, target-version verification, and host safety approval when requested | Update only Fuse Bead Designer to that stable tag, verify the installed version, then stop and require a new task. |
+
 ## Evidence record
 
 Final forward check:

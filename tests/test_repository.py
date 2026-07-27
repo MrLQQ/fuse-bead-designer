@@ -109,14 +109,14 @@ def test_readmes_put_natural_language_before_developer_cli():
     assert english.index("## Developer") < english.index("python ")
 
 
-def test_v03_readmes_define_the_pattern_first_contract():
+def test_v031_readmes_define_the_pattern_first_contract():
     chinese = Path("README.md").read_text(encoding="utf-8")
     english = Path("README.en.md").read_text(encoding="utf-8")
 
-    assert "## v0.3.0 图案优先流程" in chinese
-    assert "v0.3.0 把“理解图片”和“生成可计数图纸”明确分开" in chinese
-    assert "## The v0.3.0 pattern-first flow" in english
-    assert "v0.3.0 deliberately separates understanding an image" in english
+    assert "## v0.3.1 图案优先流程" in chinese
+    assert "v0.3.1 把“理解图片”和“生成可计数图纸”明确分开" in chinese
+    assert "## The v0.3.1 pattern-first flow" in english
+    assert "v0.3.1 deliberately separates understanding an image" in english
 
     for phrase in (
         "三条输入路线",
@@ -168,6 +168,18 @@ def test_readmes_document_runnable_finished_bead_route_and_conditional_review():
     assert "compare the source with the semantic pattern draft" in english
 
 
+def test_readmes_document_nonblocking_confirmed_update_discovery():
+    chinese = Path("README.md").read_text(encoding="utf-8")
+    english = Path("README.en.md").read_text(encoding="utf-8")
+
+    assert "## 自动发现更新：一句话确认" in chinese
+    assert "确认更新到 v0.4.0" in chinese
+    assert "24 小时内最多检查一次" in chinese
+    assert "不会阻塞拼豆图生成" in chinese
+    assert "请检查 Fuse Bead Designer 是否有新版本；如果发现新版，告诉我版本号，不要自动安装。" in chinese
+    assert "## Automatic update discovery" in english
+
+
 def test_marketplace_points_to_plugin():
     data = json.loads(Path(".agents/plugins/marketplace.json").read_text(encoding="utf-8"))
     entry = next(item for item in data["plugins"] if item["name"] == "fuse-bead-designer")
@@ -191,16 +203,24 @@ def test_release_versions_are_synchronized():
     )
     pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
     packager = Path("tools/package_release.py").read_text(encoding="utf-8")
+    update_policy = json.loads(
+        Path(
+            "plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/"
+            "update-policy.json"
+        ).read_text(encoding="utf-8")
+    )
     chinese = Path("README.md").read_text(encoding="utf-8")
     english = Path("README.en.md").read_text(encoding="utf-8")
     agents = Path("AGENTS.md").read_text(encoding="utf-8")
 
-    assert plugin["version"] == "0.3.0"
-    assert marketplace["version"] == "0.3.0"
-    assert 'version = "0.3.0"' in pyproject
-    assert 'VERSION = "0.3.0"' in packager
+    assert plugin["version"] == "0.3.1"
+    assert marketplace["version"] == "0.3.1"
+    assert update_policy["current_version"] == "0.3.1"
+    assert 'version = "0.3.1"' in pyproject
+    assert 'VERSION = "0.3.1"' in packager
     for text in (chinese, english, agents):
-        assert "v0.3.0" in text
+        assert "v0.3.1" in text
+        assert "v0.3.0" not in text
         assert "v0.2.0" not in text
 
 
@@ -211,7 +231,7 @@ def test_agents_installation_contract_is_agent_owned():
     assert "check whether the `fuse-bead-designer` Marketplace is already installed" in contract
     assert "Then separately check whether the `fuse-bead-designer` plugin is installed" in contract
     assert "If the Marketplace is not installed, run this command internally:" in contract
-    assert "codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.3.0" in contract
+    assert "codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.3.1" in contract
     assert "If the plugin is not installed, run this command internally:" in contract
     assert "codex plugin add fuse-bead-designer@fuse-bead-designer" in contract
     assert "Do not ask the user to run" in contract
@@ -221,6 +241,10 @@ def test_agents_installation_contract_is_agent_owned():
     assert "running examples" in contract
     assert "creating virtual environments" in contract
     assert "installing runtime dependencies" in contract
+    assert "Installation intent, read-only update-check intent, and confirmed update intent are separate authorizations." in contract
+    assert "A request to install does not authorize checking for updates or updating." in contract
+    assert "A request to check for updates is read-only and does not authorize installation or updating." in contract
+    assert "Only the exact returned confirmation sentence authorizes an update to that exact stable version." in contract
 
 
 def test_forward_eval_separates_installation_from_pattern_generation_rubrics():
@@ -229,6 +253,15 @@ def test_forward_eval_separates_installation_from_pattern_generation_rubrics():
     assert "## Pattern-generation pass rubric" in evaluation
     assert "The installation-only scenario is evaluated only by the separate installation rubric below." in evaluation
     assert "## Installation-only pass rubric" in evaluation
+    assert "## Update-discovery pass rubric" in evaluation
+    for scenario in (
+        "Ordinary pattern generation",
+        "Available update notice",
+        "Offline update checking",
+        "Unconfirmed update request",
+        "Confirmed exact stable version update",
+    ):
+        assert scenario in evaluation
 
 
 def test_skill_eval_retains_real_pattern_quality_failure_baseline():
@@ -481,11 +514,11 @@ def test_v03_release_archive_contract_replaces_v02():
     )
 
     assert "v0.2.0" not in packager
-    assert 'VERSION = "0.3.0"' in packager
+    assert 'VERSION = "0.3.1"' in packager
     assert 'f"fuse-bead-designer-plugin-v{VERSION}.zip"' in packager
     assert 'f"create-fuse-bead-patterns-skill-v{VERSION}.zip"' in packager
     assert "member = Path(source.name) / path.relative_to(source)" in packager
-    assert plugin["version"] == "0.3.0"
+    assert plugin["version"] == "0.3.1"
 
 
 def test_object_cutout_preserves_source_pixels_and_white_details():

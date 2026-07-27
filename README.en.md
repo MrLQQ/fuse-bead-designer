@@ -10,7 +10,7 @@ Send a finished-bead photo, pixel art, object photo, or high-resolution illustra
 
 > Please install this Codex plugin: https://github.com/MrLQQ/fuse-bead-designer. Complete the installation yourself; after it succeeds, stop. Do not run examples or install additional runtime dependencies; only remind me to start a new task.
 
-Installation changes the local environment, so the Agent asks for permission once. After approval, the Agent checks and completes installation internally; you do not need to copy terminal commands. It stops after installation; start a new task and then send the image request below.
+Installation changes the local environment, so the Agent asks for permission once. After approval, the Agent checks and completes installation internally; you do not need to copy terminal commands. “Install” authorizes installation only, not update checking or updating. It stops after installation; start a new task and then send the image request below.
 
 ## Everyday use: upload an image and describe the result
 
@@ -20,9 +20,17 @@ Attach the source image in an image-capable Agent conversation, then send:
 
 You can add natural constraints such as “prefer standard 29 × 29 boards,” “preserve white beads,” or “do not guess behind this occlusion; mark it for my review.” The normal flow does not expose a Skill token or require local commands.
 
-## The v0.3.0 pattern-first flow
+## Automatic update discovery
 
-v0.3.0 deliberately separates understanding an image from producing a countable pattern. First establish a logical pattern with verified dimensions; then the deterministic compiler maps colors, calculates counts, derives the board layout, and renders the deliverables. The three input routes are:
+During ordinary pattern generation, the Agent makes a read-only background check at most once every 24 hours. A recent check, no update, or offline result does not interrupt the conversation; a failed check never blocks pattern generation. Only a newer stable version produces a concise notice at the end of the current delivery, for example:
+
+> Fuse Bead Designer v0.4.0 is available. Reply “确认更新到 v0.4.0” to update.
+
+To ask directly, say: “Please check whether Fuse Bead Designer has an update; if it does, tell me the version but do not install it automatically.” A check is read-only and does not authorize installation or an update; “update it” is not write authorization either. Only the exact versioned confirmation returned by the Agent authorizes that stable version. The Agent owns the internal commands, while the host can still require safety approval for network or local changes. After a verified update, the Agent stops and asks you to start a new task before using the new version.
+
+## The v0.3.1 pattern-first flow
+
+v0.3.1 deliberately separates understanding an image from producing a countable pattern. First establish a logical pattern with verified dimensions; then the deterministic compiler maps colors, calculates counts, derives the board layout, and renders the deliverables. The three input routes are:
 
 1. **Finished-bead photo**: exclude fingers, tables, glare, and other interference, correct perspective, and produce a front-facing grid with declared dimensions. Only a rectified regular grid may enter the compiler.
 2. **Pixel art or an existing pattern**: verify its logical width and height, then compile it directly. Automatic grid recovery is allowed only when a unique nearest-neighbor scale is provable; ambiguous interpretations stop for confirmation.
@@ -105,12 +113,14 @@ For normal users, the boundary remains the same: send the installation prompt an
 
 ### Codex Marketplace / Plugin
 
-Install the fixed v0.3.0 release:
+Install the fixed v0.3.1 release:
 
 ```bash
-codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.3.0
+codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.3.1
 codex plugin add fuse-bead-designer@fuse-bead-designer
 ```
+
+A Git Marketplace pinned to a stable tag does not advance when it is merely refreshed: a Marketplace bound to `v0.3.1` remains on `v0.3.1`. Updating therefore requires a read-only check followed by the user's exact version confirmation; the Agent rebinds the Marketplace to that confirmed tag and verifies the installed version. Do not treat refresh or a generic update request as update authorization.
 
 Debug from a local clone:
 
@@ -136,11 +146,11 @@ pytest -q
 python tools/package_release.py
 ```
 
-v0.3.0 packaging writes:
+v0.3.1 packaging writes:
 
 ```text
-dist/fuse-bead-designer-plugin-v0.3.0.zip
-dist/create-fuse-bead-patterns-skill-v0.3.0.zip
+dist/fuse-bead-designer-plugin-v0.3.1.zip
+dist/create-fuse-bead-patterns-skill-v0.3.1.zip
 ```
 
 ### Direct deterministic compiler use
