@@ -12,6 +12,11 @@ from .sizing import (
     plan_semantic_size_targets,
     recommend_pattern_sizes,
 )
+from .variant_set import (
+    render_variant_comparison,
+    validate_feature_contract,
+    validate_variant_set,
+)
 
 __all__ = [
     "AmbiguousGridError",
@@ -29,6 +34,9 @@ __all__ = [
     "plan_semantic_size_targets",
     "policy_for",
     "recover_nearest_neighbor_grid",
+    "render_variant_comparison",
     "recommend_pattern_sizes",
     "sample_cell_centers",
+    "validate_feature_contract",
+    "validate_variant_set",
 ]
