@@ -267,13 +267,13 @@ def test_release_versions_are_synchronized():
     english = Path("README.en.md").read_text(encoding="utf-8")
     agents = Path("AGENTS.md").read_text(encoding="utf-8")
 
-    assert plugin["version"] == "0.4.0"
-    assert marketplace["version"] == "0.4.0"
-    assert update_policy["current_version"] == "0.4.0"
-    assert 'version = "0.4.0"' in pyproject
-    assert 'VERSION = "0.4.0"' in packager
+    assert plugin["version"] == "0.5.0"
+    assert marketplace["version"] == "0.5.0"
+    assert update_policy["current_version"] == "0.5.0"
+    assert 'version = "0.5.0"' in pyproject
+    assert 'VERSION = "0.5.0"' in packager
     for text in (chinese, english, agents):
-        assert "v0.4.0" in text
+        assert "v0.5.0" in text
         assert "v0.3.1" not in text
         assert "v0.3.0" not in text
         assert "v0.2.0" not in text
@@ -286,7 +286,7 @@ def test_agents_installation_contract_is_agent_owned():
     assert "check whether the `fuse-bead-designer` Marketplace is already installed" in contract
     assert "Then separately check whether the `fuse-bead-designer` plugin is installed" in contract
     assert "If the Marketplace is not installed, run this command internally:" in contract
-    assert "codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.4.0" in contract
+    assert "codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.5.0" in contract
     assert "If the plugin is not installed, run this command internally:" in contract
     assert "codex plugin add fuse-bead-designer@fuse-bead-designer" in contract
     assert "Do not ask the user to run" in contract
@@ -631,7 +631,7 @@ def test_public_examples_use_exact_v03_source_routes():
             assert compiled.height >= expected["height"] * 4
 
 
-def test_v04_release_archive_contract_replaces_v03():
+def test_v05_release_archive_contract_replaces_v04():
     packager = Path("tools/package_release.py").read_text(encoding="utf-8")
     plugin = json.loads(
         Path("plugins/fuse-bead-designer/.codex-plugin/plugin.json").read_text(
@@ -640,11 +640,11 @@ def test_v04_release_archive_contract_replaces_v03():
     )
 
     assert "v0.3.1" not in packager
-    assert 'VERSION = "0.4.0"' in packager
+    assert 'VERSION = "0.5.0"' in packager
     assert 'f"fuse-bead-designer-plugin-v{VERSION}.zip"' in packager
     assert 'f"create-fuse-bead-patterns-skill-v{VERSION}.zip"' in packager
     assert "member = Path(source.name) / path.relative_to(source)" in packager
-    assert plugin["version"] == "0.4.0"
+    assert plugin["version"] == "0.5.0"
 
 
 def test_object_cutout_preserves_source_pixels_and_white_details():

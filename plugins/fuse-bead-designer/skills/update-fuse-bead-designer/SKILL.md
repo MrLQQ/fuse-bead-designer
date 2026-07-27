@@ -1,6 +1,6 @@
 ---
 name: update-fuse-bead-designer
-description: Check or update the Fuse Bead Designer Plugin or standalone Skill. Use when the user asks whether this specific Plugin has an update, asks to update it, or confirms a version-specific notice such as “确认更新到 v0.4.0”.
+description: Check or update the Fuse Bead Designer Plugin or standalone Skill. Use when the user asks whether this specific Plugin has an update, asks to update it, or confirms a version-specific notice such as “确认更新到 v0.5.0”.
 ---
 
 # Update Fuse Bead Designer
@@ -22,7 +22,7 @@ Update only `fuse-bead-designer@fuse-bead-designer` from the named
    than the installed version, and be an exact stable tag of the form
    `vMAJOR.MINOR.PATCH`. Never track `main` or a branch.
 4. Before any write, require an explicit versioned confirmation for that fresh
-   target, exactly such as `确认更新到 v0.4.0`. A request such as “更新这个插件吧”
+   target, exactly such as `确认更新到 v0.5.0`. A request such as “更新这个插件吧”
    is not confirmation. If it is absent or names another target, ask for the
    exact sentence and stop.
 5. Request and honor every host safety approval required for the write. Exact

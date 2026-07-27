@@ -21,7 +21,7 @@ does not install, remove, or modify a Plugin.
 Route a specific check, update request, or exact confirmation to
 `update-fuse-bead-designer`. An update request without an exact target is not
 write authorization: after a fresh check, ask for the returned sentence, such
-as `确认更新到 v0.4.0`.
+as `确认更新到 v0.5.0`.
 
 On Codex, use its Plugin manager only. Before any standalone write, require the
 host's native manager to record the exact installed version and corresponding

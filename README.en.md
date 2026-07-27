@@ -123,14 +123,14 @@ For normal users, the boundary remains the same: send the installation prompt an
 
 ### Codex Marketplace / Plugin
 
-Install the fixed v0.4.0 release:
+Install the fixed v0.5.0 release:
 
 ```bash
-codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.4.0
+codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.5.0
 codex plugin add fuse-bead-designer@fuse-bead-designer
 ```
 
-A Git Marketplace pinned to a stable tag does not advance when it is merely refreshed: a Marketplace bound to `v0.4.0` remains on `v0.4.0`. Updating therefore requires a read-only check followed by the user's exact version confirmation; the Agent rebinds the Marketplace to that confirmed tag and verifies the installed version. Do not treat refresh or a generic update request as update authorization.
+A Git Marketplace pinned to a stable tag does not advance when it is merely refreshed: a Marketplace bound to `v0.5.0` remains on `v0.5.0`. Updating therefore requires a read-only check followed by the user's exact version confirmation; the Agent rebinds the Marketplace to that confirmed tag and verifies the installed version. Do not treat refresh or a generic update request as update authorization.
 
 Debug from a local clone:
 
@@ -156,11 +156,11 @@ pytest -q
 python tools/package_release.py
 ```
 
-v0.4.0 packaging writes:
+v0.5.0 packaging writes:
 
 ```text
-dist/fuse-bead-designer-plugin-v0.4.0.zip
-dist/create-fuse-bead-patterns-skill-v0.4.0.zip
+dist/fuse-bead-designer-plugin-v0.5.0.zip
+dist/create-fuse-bead-patterns-skill-v0.5.0.zip
 ```
 
 ### Direct deterministic compiler use

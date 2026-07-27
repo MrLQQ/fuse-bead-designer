@@ -129,14 +129,14 @@ Codex 优先安装完整 Plugin；支持 [Agent Skills](https://agentskills.io/)
 
 ### Codex Marketplace / Plugin
 
-固定安装 v0.4.0：
+固定安装 v0.5.0：
 
 ```bash
-codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.4.0
+codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.5.0
 codex plugin add fuse-bead-designer@fuse-bead-designer
 ```
 
-Git Marketplace 绑定固定稳定标签后，普通刷新不会让它前进到新标签：绑定 `v0.4.0` 的 Marketplace 刷新后仍是 `v0.4.0`。因此更新必须先只读检查，再由用户回复 Agent 返回的精确版本确认句；Agent 将 Marketplace 重新绑定到该确认标签并验证安装版本。不要把刷新或泛化的“更新”请求当作更新授权。
+Git Marketplace 绑定固定稳定标签后，普通刷新不会让它前进到新标签：绑定 `v0.5.0` 的 Marketplace 刷新后仍是 `v0.5.0`。因此更新必须先只读检查，再由用户回复 Agent 返回的精确版本确认句；Agent 将 Marketplace 重新绑定到该确认标签并验证安装版本。不要把刷新或泛化的“更新”请求当作更新授权。
 
 从本地克隆调试：
 
@@ -162,11 +162,11 @@ pytest -q
 python tools/package_release.py
 ```
 
-v0.4.0 打包产物：
+v0.5.0 打包产物：
 
 ```text
-dist/fuse-bead-designer-plugin-v0.4.0.zip
-dist/create-fuse-bead-patterns-skill-v0.4.0.zip
+dist/fuse-bead-designer-plugin-v0.5.0.zip
+dist/create-fuse-bead-patterns-skill-v0.5.0.zip
 ```
 
 ### 直接调用确定性编译器

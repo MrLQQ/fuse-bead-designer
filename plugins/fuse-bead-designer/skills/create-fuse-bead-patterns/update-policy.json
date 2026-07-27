@@ -1,6 +1,6 @@
 {
   "repository": "MrLQQ/fuse-bead-designer",
-  "current_version": "0.4.0",
+  "current_version": "0.5.0",
   "stable_tag_pattern": "vMAJOR.MINOR.PATCH",
   "check_interval_seconds": 86400
 }
