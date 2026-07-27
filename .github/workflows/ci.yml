@@ -23,5 +23,5 @@ jobs:
         with:
           name: fuse-bead-release-python-${{ matrix.python-version }}
           path: |
-            dist/fuse-bead-designer-plugin-v0.1.0.zip
-            dist/create-fuse-bead-patterns-skill-v0.1.0.zip
+            dist/fuse-bead-designer-plugin-v*.zip
+            dist/create-fuse-bead-patterns-skill-v*.zip

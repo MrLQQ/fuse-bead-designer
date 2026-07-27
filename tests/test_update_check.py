@@ -48,11 +48,11 @@ def test_select_latest_stable_is_numeric_and_ignores_non_stable_tags():
     ) == "v0.10.0"
 
 
-def test_packaged_policy_is_v050():
+def test_packaged_policy_is_v051():
     policy = update_check.load_policy(POLICY)
 
     assert policy.repository == "MrLQQ/fuse-bead-designer"
-    assert policy.current_version == "0.5.0"
+    assert policy.current_version == "0.5.1"
     assert policy.stable_tag_pattern == "vMAJOR.MINOR.PATCH"
     assert policy.check_interval_seconds == 86400
 

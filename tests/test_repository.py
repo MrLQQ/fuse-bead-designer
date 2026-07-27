@@ -30,6 +30,10 @@ def test_pattern_skill_checks_updates_without_blocking_generation():
     contract = " ".join(skill.split())
 
     assert "scripts/check_update.py" in skill
+    assert "Python 3.10+" in skill
+    assert "sys.version_info >= (3, 10)" in skill
+    assert "`<python-3.10+> scripts/check_update.py`" in skill
+    assert "Do not create or install a runtime for this non-blocking check." in contract
     assert "Do not use `--force` during ordinary pattern generation." in skill
     assert (
         "Only surface `update-available` as a concise notice with its returned "
@@ -44,7 +48,15 @@ def test_pattern_skill_checks_updates_without_blocking_generation():
 
 def test_update_skill_requires_confirmation_verification_and_rollback():
     skill = UPDATE_SKILL.read_text(encoding="utf-8")
+    contract = " ".join(skill.split())
 
+    assert "Python 3.10+" in skill
+    assert "sys.version_info >= (3, 10)" in skill
+    assert (
+        "`<python-3.10+> ../create-fuse-bead-patterns/scripts/check_update.py "
+        "--force`" in skill
+    )
+    assert "Do not create or install a runtime for the update check." in contract
     for phrase in (
         "确认更新到 v",
         "exact stable tag",
@@ -56,6 +68,14 @@ def test_update_skill_requires_confirmation_verification_and_rollback():
         assert phrase in skill
     for forbidden in ("track `main`", "run examples", "create a virtual environment"):
         assert forbidden in skill
+
+
+def test_ci_uploads_versioned_release_archives_without_a_hardcoded_old_version():
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+
+    assert "dist/fuse-bead-designer-plugin-v*.zip" in workflow
+    assert "dist/create-fuse-bead-patterns-skill-v*.zip" in workflow
+    assert "v0.1.0.zip" not in workflow
 
 
 def test_update_reference_defines_statuses_interval_and_host_boundary():
@@ -121,6 +141,8 @@ def test_readmes_put_natural_language_before_developer_cli():
     chinese = Path("README.md").read_text(encoding="utf-8")
     english = Path("README.en.md").read_text(encoding="utf-8")
 
+    assert "运行环境：Python 3.10+" in chinese
+    assert "Runtime: Python 3.10+" in english
     assert (
         "请安装这个 Codex 插件：https://github.com/MrLQQ/fuse-bead-designer "
         "。请由你完成安装；安装成功后停止，不要运行示例或安装额外运行依赖，"
@@ -198,7 +220,7 @@ def test_readmes_document_nonblocking_confirmed_update_discovery():
     english = Path("README.en.md").read_text(encoding="utf-8")
 
     assert "## 自动发现更新：一句话确认" in chinese
-    assert "确认更新到 v0.5.0" in chinese
+    assert "确认更新到 v0.5.1" in chinese
     assert "24 小时内最多检查一次" in chinese
     assert "不会阻塞拼豆图生成" in chinese
     assert "请检查 Fuse Bead Designer 是否有新版本；如果发现新版，告诉我版本号，不要自动安装。" in chinese
@@ -267,13 +289,13 @@ def test_release_versions_are_synchronized():
     english = Path("README.en.md").read_text(encoding="utf-8")
     agents = Path("AGENTS.md").read_text(encoding="utf-8")
 
-    assert plugin["version"] == "0.5.0"
-    assert marketplace["version"] == "0.5.0"
-    assert update_policy["current_version"] == "0.5.0"
-    assert 'version = "0.5.0"' in pyproject
-    assert 'VERSION = "0.5.0"' in packager
+    assert plugin["version"] == "0.5.1"
+    assert marketplace["version"] == "0.5.1"
+    assert update_policy["current_version"] == "0.5.1"
+    assert 'version = "0.5.1"' in pyproject
+    assert 'VERSION = "0.5.1"' in packager
     for text in (chinese, english, agents):
-        assert "v0.5.0" in text
+        assert "v0.5.1" in text
         assert "v0.3.1" not in text
         assert "v0.3.0" not in text
         assert "v0.2.0" not in text
@@ -286,7 +308,7 @@ def test_agents_installation_contract_is_agent_owned():
     assert "check whether the `fuse-bead-designer` Marketplace is already installed" in contract
     assert "Then separately check whether the `fuse-bead-designer` plugin is installed" in contract
     assert "If the Marketplace is not installed, run this command internally:" in contract
-    assert "codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.5.0" in contract
+    assert "codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.5.1" in contract
     assert "If the plugin is not installed, run this command internally:" in contract
     assert "codex plugin add fuse-bead-designer@fuse-bead-designer" in contract
     assert "Do not ask the user to run" in contract
@@ -631,7 +653,7 @@ def test_public_examples_use_exact_v03_source_routes():
             assert compiled.height >= expected["height"] * 4
 
 
-def test_v05_release_archive_contract_replaces_v04():
+def test_v051_release_archive_contract_replaces_v05():
     packager = Path("tools/package_release.py").read_text(encoding="utf-8")
     plugin = json.loads(
         Path("plugins/fuse-bead-designer/.codex-plugin/plugin.json").read_text(
@@ -640,11 +662,11 @@ def test_v05_release_archive_contract_replaces_v04():
     )
 
     assert "v0.3.1" not in packager
-    assert 'VERSION = "0.5.0"' in packager
+    assert 'VERSION = "0.5.1"' in packager
     assert 'f"fuse-bead-designer-plugin-v{VERSION}.zip"' in packager
     assert 'f"create-fuse-bead-patterns-skill-v{VERSION}.zip"' in packager
     assert "member = Path(source.name) / path.relative_to(source)" in packager
-    assert plugin["version"] == "0.5.0"
+    assert plugin["version"] == "0.5.1"
 
 
 def test_object_cutout_preserves_source_pixels_and_white_details():

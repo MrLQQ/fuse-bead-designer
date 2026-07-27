@@ -34,7 +34,7 @@ Size is a soft target. A tier that loses a hard feature may grow once; there are
 
 During ordinary pattern generation, the Agent makes a read-only background check at most once every 24 hours. A recent check, no update, or offline result does not interrupt the conversation; a failed check never blocks pattern generation. Only a newer stable version produces a concise notice at the end of the current delivery, for example:
 
-> Fuse Bead Designer v0.5.0 is available. Reply “确认更新到 v0.5.0” to update.
+> Fuse Bead Designer v0.5.1 is available. Reply “确认更新到 v0.5.1” to update.
 
 To ask directly, say: “Please check whether Fuse Bead Designer has an update; if it does, tell me the version but do not install it automatically.” A check is read-only and does not authorize installation or an update; “update it” is not write authorization either. Only the exact versioned confirmation returned by the Agent authorizes that stable version. The Agent owns the internal commands, while the host can still require safety approval for network or local changes. After a verified update, the Agent stops and asks you to start a new task before using the new version.
 
@@ -123,14 +123,14 @@ For normal users, the boundary remains the same: send the installation prompt an
 
 ### Codex Marketplace / Plugin
 
-Install the fixed v0.5.0 release:
+Install the fixed v0.5.1 release:
 
 ```bash
-codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.5.0
+codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.5.1
 codex plugin add fuse-bead-designer@fuse-bead-designer
 ```
 
-A Git Marketplace pinned to a stable tag does not advance when it is merely refreshed: a Marketplace bound to `v0.5.0` remains on `v0.5.0`. Updating therefore requires a read-only check followed by the user's exact version confirmation; the Agent rebinds the Marketplace to that confirmed tag and verifies the installed version. Do not treat refresh or a generic update request as update authorization.
+A Git Marketplace pinned to a stable tag does not advance when it is merely refreshed: a Marketplace bound to `v0.5.1` remains on `v0.5.1`. Updating therefore requires a read-only check followed by the user's exact version confirmation; the Agent rebinds the Marketplace to that confirmed tag and verifies the installed version. Do not treat refresh or a generic update request as update authorization.
 
 Debug from a local clone:
 
@@ -150,17 +150,19 @@ cp -R plugins/fuse-bead-designer/skills/create-fuse-bead-patterns \
 
 ### Local development, tests, and packaging
 
+Runtime: Python 3.10+.
+
 ```bash
 python -m pip install -e ".[test]"
 pytest -q
 python tools/package_release.py
 ```
 
-v0.5.0 packaging writes:
+v0.5.1 packaging writes:
 
 ```text
-dist/fuse-bead-designer-plugin-v0.5.0.zip
-dist/create-fuse-bead-patterns-skill-v0.5.0.zip
+dist/fuse-bead-designer-plugin-v0.5.1.zip
+dist/create-fuse-bead-patterns-skill-v0.5.1.zip
 ```
 
 ### Direct deterministic compiler use

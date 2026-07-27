@@ -1,6 +1,6 @@
 ---
 name: update-fuse-bead-designer
-description: Check or update the Fuse Bead Designer Plugin or standalone Skill. Use when the user asks whether this specific Plugin has an update, asks to update it, or confirms a version-specific notice such as “确认更新到 v0.5.0”.
+description: Check or update the Fuse Bead Designer Plugin or standalone Skill. Use when the user asks whether this specific Plugin has an update, asks to update it, or confirms a version-specific notice such as “确认更新到 v0.5.1”.
 ---
 
 # Update Fuse Bead Designer
@@ -15,14 +15,20 @@ Update only `fuse-bead-designer@fuse-bead-designer` from the named
    `codex plugin marketplace list --json` and `codex plugin list --json`.
    Require the Marketplace to be the Fuse Bead Designer Git source and the
    installed Plugin to be exactly `fuse-bead-designer@fuse-bead-designer`.
-2. From this Skill directory, run
-   `python ../create-fuse-bead-patterns/scripts/check_update.py --force`.
+2. Resolve a host-provided Python 3.10+ interpreter. Inspect the active
+   environment and the host's available `python3`, `python`, or platform-native
+   Python launcher candidates. Accept a candidate only when
+   `<candidate> -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)"`
+   succeeds, and use it as `<python-3.10+>`. Do not create or install a runtime
+   for the update check. If no candidate passes, report that Python 3.10+ is
+   required and stop before writes. From this Skill directory, run
+   `<python-3.10+> ../create-fuse-bead-patterns/scripts/check_update.py --force`.
    Parse its JSON; do not write when it is not `update-available`.
 3. Require the requested target to equal the fresh `latest_version`, be newer
    than the installed version, and be an exact stable tag of the form
    `vMAJOR.MINOR.PATCH`. Never track `main` or a branch.
 4. Before any write, require an explicit versioned confirmation for that fresh
-   target, exactly such as `确认更新到 v0.5.0`. A request such as “更新这个插件吧”
+   target, exactly such as `确认更新到 v0.5.1`. A request such as “更新这个插件吧”
    is not confirmation. If it is absent or names another target, ask for the
    exact sentence and stop.
 5. Request and honor every host safety approval required for the write. Exact

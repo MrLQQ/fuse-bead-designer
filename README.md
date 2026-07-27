@@ -36,13 +36,13 @@
 
 每次日常生成时，Agent 会在后台做只读检查，**24 小时内最多检查一次**。检查没有新版本、刚检查过或离线时都不打断对话；即使检查失败，**不会阻塞拼豆图生成**。只有发现更高的稳定版本，Agent 才会在本次交付末尾提示，例如：
 
-> Fuse Bead Designer 有新版本 v0.5.0。回复“确认更新到 v0.5.0”即可更新。
+> Fuse Bead Designer 有新版本 v0.5.1。回复“确认更新到 v0.5.1”即可更新。
 
 想主动检查时，直接说：
 
 > 请检查 Fuse Bead Designer 是否有新版本；如果发现新版，告诉我版本号，不要自动安装。
 
-“检查”是只读操作，不授权安装或更新；“更新一下”也不是写入授权。只有 Agent 刚刚返回的、版本完全一致的确认句（例如 **确认更新到 v0.5.0**）才授权更新那个稳定版本。Agent 负责所有内部命令；宿主仍可能要求你批准网络或本机安全操作，不能绕过。更新验证成功后 Agent 会停止，并提醒你**新建任务**后再使用新版本。
+“检查”是只读操作，不授权安装或更新；“更新一下”也不是写入授权。只有 Agent 刚刚返回的、版本完全一致的确认句（例如 **确认更新到 v0.5.1**）才授权更新那个稳定版本。Agent 负责所有内部命令；宿主仍可能要求你批准网络或本机安全操作，不能绕过。更新验证成功后 Agent 会停止，并提醒你**新建任务**后再使用新版本。
 
 ## v0.4.0 图案优先流程
 
@@ -129,14 +129,14 @@ Codex 优先安装完整 Plugin；支持 [Agent Skills](https://agentskills.io/)
 
 ### Codex Marketplace / Plugin
 
-固定安装 v0.5.0：
+固定安装 v0.5.1：
 
 ```bash
-codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.5.0
+codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.5.1
 codex plugin add fuse-bead-designer@fuse-bead-designer
 ```
 
-Git Marketplace 绑定固定稳定标签后，普通刷新不会让它前进到新标签：绑定 `v0.5.0` 的 Marketplace 刷新后仍是 `v0.5.0`。因此更新必须先只读检查，再由用户回复 Agent 返回的精确版本确认句；Agent 将 Marketplace 重新绑定到该确认标签并验证安装版本。不要把刷新或泛化的“更新”请求当作更新授权。
+Git Marketplace 绑定固定稳定标签后，普通刷新不会让它前进到新标签：绑定 `v0.5.1` 的 Marketplace 刷新后仍是 `v0.5.1`。因此更新必须先只读检查，再由用户回复 Agent 返回的精确版本确认句；Agent 将 Marketplace 重新绑定到该确认标签并验证安装版本。不要把刷新或泛化的“更新”请求当作更新授权。
 
 从本地克隆调试：
 
@@ -156,17 +156,19 @@ cp -R plugins/fuse-bead-designer/skills/create-fuse-bead-patterns \
 
 ### 本地开发、测试与打包
 
+运行环境：Python 3.10+。
+
 ```bash
 python -m pip install -e ".[test]"
 pytest -q
 python tools/package_release.py
 ```
 
-v0.5.0 打包产物：
+v0.5.1 打包产物：
 
 ```text
-dist/fuse-bead-designer-plugin-v0.5.0.zip
-dist/create-fuse-bead-patterns-skill-v0.5.0.zip
+dist/fuse-bead-designer-plugin-v0.5.1.zip
+dist/create-fuse-bead-patterns-skill-v0.5.1.zip
 ```
 
 ### 直接调用确定性编译器

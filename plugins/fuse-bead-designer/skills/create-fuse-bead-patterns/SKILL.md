@@ -48,8 +48,14 @@ the baseline analysis. Read
 
 Perform these steps in order:
 
-1. From this skill directory, run `python scripts/check_update.py` and parse
-   its one JSON result. Do not use `--force` during ordinary pattern generation.
+1. Resolve a host-provided Python 3.10+ interpreter before checking updates.
+   Inspect the active environment and the host's available `python3`, `python`,
+   or platform-native Python launcher candidates. Accept a candidate only when
+   `<candidate> -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)"`
+   succeeds, and use it as `<python-3.10+>`. Do not create or install a runtime
+   for this non-blocking check. From this skill directory, run
+   `<python-3.10+> scripts/check_update.py` and parse its one JSON result.
+   Do not use `--force` during ordinary pattern generation.
    Only surface `update-available` as a concise notice with its returned
    versioned confirmation prompt in the final response; discard `recent`,
    `up-to-date`, and `unavailable`. If the command cannot run or its output is

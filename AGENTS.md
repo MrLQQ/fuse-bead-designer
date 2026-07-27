@@ -9,7 +9,7 @@ When the user asks to install this repository or Plugin, recognize that as insta
 After permission is granted on Codex, first check whether the `fuse-bead-designer` Marketplace is already installed. Do not install a duplicate Marketplace. If the Marketplace is not installed, run this command internally:
 
 ```bash
-codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.5.0
+codex plugin marketplace add MrLQQ/fuse-bead-designer --ref v0.5.1
 ```
 
 Then separately check whether the `fuse-bead-designer` plugin is installed. Do not install a duplicate plugin. If the plugin is not installed, run this command internally:
