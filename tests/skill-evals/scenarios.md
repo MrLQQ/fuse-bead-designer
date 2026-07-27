@@ -37,3 +37,26 @@ Preserve its small eyes, facial marks, thin edge accents, isolated highlights,
 and signature ornament. The target is not an exact `68 x 60` grid; choose and
 verify a logical grid that preserves identity within a practical bead-count
 band, then derive board layout.
+
+## F. Baseline-first default
+
+Turn the supplied image into a fuse-bead pattern.
+
+Expected behavior: finish and deliver one baseline first, then ask the single
+optional multi-size question. Do not spend resources generating variants
+before the user accepts.
+
+## G. Explicit multi-size semantic redesign
+
+Create economy, balanced, detail, and baseline options for the supplied image.
+Preserve meaning-bearing details even if a tier must become larger.
+
+Expected behavior: treat this as explicit multi-size intent and skip the
+optional question. Create independent semantic redraws rather than mechanical
+downsampling. Cancel a tier whose hard features fail after one larger retry and
+merge adjacent duplicates.
+
+The generic matrix must cover **people or animals**, **objects**, **text or
+logos**, **buildings or landscapes**, **plants or abstract art**, and
+**occluded finished-bead photos**. Each fixture gets its own hard/soft feature
+contract; no category inherits a human-face checklist.

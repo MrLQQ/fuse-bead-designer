@@ -6,14 +6,21 @@ output is a plain grid-aligned design intermediate, not a finished template.
 
 ## Draft request
 
+First describe the actual subject in a task-specific hard and soft semantic
+feature contract. The contract must not assume the subject is a person. A hard
+feature makes the subject, message, or composition materially different when
+lost; a soft feature may be simplified to control bead cost.
+
 Give the image generation/editing tool these positive requirements:
 
 1. Create one flat, front-facing fuse-bead pattern draft on a transparent or
    plain background.
 2. Target a practical occupied-cell budget and choose enough logical cells to
    preserve the subject rather than forcing a 29-cell board multiple.
-3. Preserve the silhouette, two-sided asymmetries, eyes, facial marks,
-   signature ornaments, thin edge accents, and isolated highlights.
+3. Preserve every hard feature in the task-specific contract. Depending on the
+   image, this may mean silhouette and pose; handles, openings, or wheels;
+   readable glyph structure; roofline and horizon; leaf arrangement; color
+   rhythm; negative space; asymmetry; edge accents; or isolated highlights.
 4. Use one flat color per logical cell with hard nearest-neighbor edges and no
    gradients, lighting, texture, shadows, peg holes, or faux bead circles.
 5. Return only the semantic artwork.
@@ -24,8 +31,8 @@ compiler outputs.
 
 ## Acceptance before compilation
 
-- Compare the draft with the source at full size. Every identity feature named
-  in the request must still be recognizable.
+- Compare the draft with the source at full size. Every hard feature in the
+  task-specific contract must still be recognizable.
 - Determine the actual logical columns and rows mechanically. A dimension
   requested from the image tool is a design target, not proof of the returned
   grid.
@@ -35,7 +42,7 @@ compiler outputs.
 - Preserve intentional transparent cells inside the logical canvas. Use a
   `--grid-box` only for display padding outside that canvas.
 - Record inferred restored cells and set `inferred-low`. Stop with
-  `review-required` if an identity-defining region has more than one credible
+  `review-required` if a hard semantic region has more than one credible
   reconstruction.
 
 After acceptance, compile with center sampling and cleanup disabled, then

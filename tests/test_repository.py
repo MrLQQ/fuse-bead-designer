@@ -15,6 +15,10 @@ UPDATE_REFERENCE = Path(
     "plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/"
     "references/update-discovery.md"
 )
+SEMANTIC_MULTI_SIZE_REFERENCE = Path(
+    "plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/"
+    "references/semantic-multi-size.md"
+)
 
 
 def test_pattern_skill_checks_updates_without_blocking_generation():
@@ -337,6 +341,77 @@ def test_skill_links_pattern_draft_contract_and_final_comparison():
     assert "[pattern-draft-contract.md](references/pattern-draft-contract.md)" in skill
     assert "compare the compiled template with the source and pattern draft" in output
     assert "board layout was derived after the logical grid was fixed" in output
+
+
+def test_skill_defaults_to_baseline_then_offers_optional_semantic_variants():
+    skill = CREATE_SKILL.read_text(encoding="utf-8")
+    contract = " ".join(skill.split())
+
+    assert "Deliver the completed baseline before offering optional variants." in skill
+    assert (
+        "需要我再生成小、中、大等不同尺寸的语义重绘版本，供你比较细节、"
+        "用豆量和底板数量吗？"
+    ) in contract
+    assert (
+        "If the original request explicitly asks for multiple sizes, a bead "
+        "budget, or a board-count comparison, skip the offer"
+    ) in contract
+
+
+def test_skill_uses_generic_semantic_feature_contract_and_independent_redraws():
+    skill = CREATE_SKILL.read_text(encoding="utf-8")
+    draft = Path(
+        "plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/"
+        "references/pattern-draft-contract.md"
+    ).read_text(encoding="utf-8")
+    reference = SEMANTIC_MULTI_SIZE_REFERENCE.read_text(encoding="utf-8")
+    contract = " ".join(f"{skill}\n{draft}\n{reference}".split())
+
+    assert "[semantic-multi-size.md](references/semantic-multi-size.md)" in skill
+    assert "task-specific hard and soft semantic feature contract" in contract
+    assert "must not assume the subject is a person" in contract
+    assert "source + accepted baseline + feature contract" in contract
+    for category in (
+        "people or animals",
+        "objects",
+        "text or logos",
+        "buildings or landscapes",
+        "plants or abstract art",
+        "occluded finished-bead photos",
+    ):
+        assert category in reference
+
+
+def test_semantic_multi_size_reference_bounds_retries_and_merges_variants():
+    reference = SEMANTIC_MULTI_SIZE_REFERENCE.read_text(encoding="utf-8")
+
+    assert "one initial candidate and one larger retry" in reference
+    assert "Cancel the tier" in reference
+    assert "Merge adjacent tiers" in reference
+    assert "two to four accepted versions" in reference
+    assert "Fixed-ratio downsampling" in reference
+    assert reference.index("scripts/create_pattern.py") < reference.index(
+        "scripts/build_variant_set.py"
+    )
+
+
+def test_skill_evals_cover_generic_multi_size_semantics():
+    scenarios = Path("tests/skill-evals/scenarios.md").read_text(encoding="utf-8")
+    evaluation = Path("tests/skill-evals/with-skill.md").read_text(encoding="utf-8")
+    evidence = f"{scenarios}\n{evaluation}"
+
+    for category in (
+        "people or animals",
+        "objects",
+        "text or logos",
+        "buildings or landscapes",
+        "plants or abstract art",
+        "occluded finished-bead photos",
+    ):
+        assert category in evidence
+    assert "baseline-first" in evidence
+    assert "explicit multi-size" in evidence
+    assert "mechanical downsampling" in evidence
 
 
 def test_skill_high_resolution_command_preserves_original_and_draft_provenance():

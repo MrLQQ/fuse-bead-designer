@@ -10,6 +10,10 @@ real workflow branch; the compiler still creates the only countable grid.
 | `high-resolution-image` | Illustration or photograph with continuous detail, gradients, or no pre-existing cell grid | Create a plain semantic pattern draft first; compile the original only through `--draft-input` with verified draft dimensions. Never sample the high-resolution original directly into a final grid. This classification cannot use `verified`; select `inferred-low` or `review-required`. |
 | `pattern-draft` | Plain grid-aligned intermediate produced by restoration or semantic design | Compile the exact declared logical grid with paired `--width`/`--height` and optional `--grid-box`. Do not redesign it during deterministic compilation. |
 
+For any route that creates or restores artwork, define hard and soft semantic
+features from the actual image content before editing. Do not substitute a
+fixed checklist of human facial features for image understanding.
+
 ## Grid evidence and route defaults
 
 - Verify the actual logical grid from declared dimensions or one unique,
@@ -38,7 +42,7 @@ real workflow branch; the compiler still creates the only countable grid.
   region and visible silhouette, symmetry, or repeated motif makes the cells
   reproducible. Mark every inferred cell, set `inferred-low`, and explain the
   basis in the report.
-- Large occlusion: an occlusion that hides an identity-defining feature, leaves
+- Large occlusion: an occlusion that hides a hard semantic feature, leaves
   more than one credible reconstruction, or prevents a reliable boundary is
   `review-required`. Ask for another photo or user decision; never call its
   quantities confirmed.

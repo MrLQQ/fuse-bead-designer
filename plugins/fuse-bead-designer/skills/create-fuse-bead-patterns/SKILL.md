@@ -20,6 +20,22 @@ model or a hand-written grid, is the sole source of truth for bead quantities.
 **Fix pattern dimensions before deriving board layout.** A 29-cell board is
 manufacturing metadata, never a target used to resample the art.
 
+## Delivery mode / 交付模式
+
+Use baseline-first delivery by default. Complete and deliver one practical
+baseline pattern before doing optional size exploration.
+Deliver the completed baseline before offering optional variants.
+
+After an ordinary single-pattern delivery, ask exactly one short question:
+
+> 需要我再生成小、中、大等不同尺寸的语义重绘版本，供你比较细节、用豆量和底板数量吗？
+
+If the original request explicitly asks for multiple sizes, a bead budget, or
+a board-count comparison, skip the offer and run the semantic multi-size branch
+immediately. After the user accepts the offer, do the same without repeating
+the baseline analysis. Read
+[semantic-multi-size.md](references/semantic-multi-size.md) before that branch.
+
 ## Workflow / 工作流
 
 Perform these steps in order:
@@ -44,7 +60,9 @@ Perform these steps in order:
    the user to choose if multiple plausible subjects remain.
 5. Prepare the route input. Rectify a finished-bead photo into a declared grid;
    preserve pixel art's logical pixels; use image generation or editing to
-   create a semantic pattern draft for a high-resolution image. Follow
+   create a semantic pattern draft for a high-resolution image. Before any
+   semantic design, write a task-specific hard and soft semantic feature
+   contract; it must not assume the subject is a person. Follow
    [pattern-draft-contract.md](references/pattern-draft-contract.md) whenever
    creating or restoring a draft.
 6. Mark uncertainty before compiling. Infer only a small, structurally
@@ -55,10 +73,10 @@ Perform these steps in order:
    raster display dimensions are not grid evidence. Require declared logical
    dimensions or unique nearest-neighbor recovery. Always fail on ambiguous grid recovery
    instead of treating display pixels as beads.
-8. Choose a practical bead budget that preserves silhouette, eyes, facial
-   marks, and signature ornaments. Fix the logical pattern dimensions, then
-   derive the 29-cell board layout. Honor explicit user constraints, but do not
-   force the pattern onto standard-board multiples.
+8. Choose a practical bead budget that preserves every hard feature in the
+   task-specific contract. Fix the logical pattern dimensions, then derive the
+   29-cell board layout. Honor explicit user constraints, but do not force the
+   pattern onto standard-board multiples.
 9. Select the palette. Use only a supplied brand/inventory palette when
    provided; never invent brand codes. Read
    [palette-format.md](references/palette-format.md) when making or using a
@@ -67,18 +85,20 @@ Perform these steps in order:
    **Internal execution**. Do not manually calculate, copy, or amend counts. For
    `pixel-art` and `pattern-draft`, singleton cleanup is disabled by default.
 11. Open the generated template and compare it with the source and draft.
-    Recheck silhouette and every identity feature before delivery. If the
-    practical bead budget was missed or identity was flattened, revise the
-    draft/grid and compile again.
+    Recheck every hard semantic feature before delivery. If the practical bead
+    budget was missed or a hard feature was flattened, revise the draft/grid
+    and compile again.
 12. Report artifact paths and the verification state. Use “confirmed” only for
    `verified`; label `inferred-low` as provisional reconstruction and
    `review-required` quantities as provisional pending user confirmation. Read
    [output-format.md](references/output-format.md) for the delivery checklist.
+    On ordinary requests, deliver the baseline first and only then use the
+    one-line optional multi-size question above.
 
 ## High-resolution route
 
 1. Design a plain bead-pattern draft with a practical bead budget.
-2. Preserve silhouette, eyes, facial marks, and signature ornaments.
+2. Preserve every hard feature from the task-specific semantic contract.
 3. Never ask an image model to generate counts or the final legend. Do not ask
    it for final UI, coordinates, or verification claims.
 4. Verify the actual logical grid mechanically.

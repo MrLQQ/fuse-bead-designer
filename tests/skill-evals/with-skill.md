@@ -45,6 +45,21 @@ an exact `68 x 60` grid, and board layout must not resize the chosen pattern.
 All counts and the final legend come from compiler artifacts, not the image
 model.
 
+## Semantic multi-size pass rubric
+
+- A baseline-first ordinary request delivers one compiled baseline before the
+  optional question and does not pre-generate unused variants.
+- An explicit multi-size request proceeds immediately.
+- Every source receives a task-specific hard/soft contract. Evaluation coverage
+  includes people or animals, objects, text or logos, buildings or landscapes,
+  plants or abstract art, and occluded finished-bead photos.
+- Each tier is independently redrawn from source + baseline + contract;
+  mechanical downsampling is not accepted as a final pattern.
+- A hard-feature failure gets at most one larger retry. Persistent failures are
+  cancelled; materially equivalent adjacent tiers are merged.
+- The final two to four versions are compiled independently and then validated
+  with `scripts/build_variant_set.py`.
+
 ## Installation-only pass rubric
 
 | Public scenario | Required evidence | Pass condition |

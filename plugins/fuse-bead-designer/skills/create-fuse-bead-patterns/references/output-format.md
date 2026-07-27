@@ -27,8 +27,11 @@ match the compiler output. Confirm that board layout was derived after the logic
 and did not resize the pattern.
 
 Open `template.png` and compare the compiled template with the source and pattern draft.
-Check silhouette, eyes, facial marks, signature ornaments, thin
-edges, isolated highlights, and every inferred region. Revise the semantic
-draft or verified grid and compile again when these identity features are
-flattened, or when the occupied-cell total falls outside the intended practical
-bead budget.
+Check every task-specific hard semantic feature and every
+inferred region. Revise the semantic draft or verified grid and compile again
+when a hard feature is flattened, or when the occupied-cell total falls outside
+the intended practical bead budget.
+
+For a multi-size delivery, keep the complete compiler artifacts inside every
+accepted tier. Also deliver `comparison.png` and `summary.json`; recommend a
+version from the validated summary, not from estimated or hand-written counts.
