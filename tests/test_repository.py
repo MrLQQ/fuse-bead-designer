@@ -5,6 +5,53 @@ from pathlib import Path
 from PIL import Image, ImageChops
 
 
+CREATE_SKILL = Path(
+    "plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/SKILL.md"
+)
+UPDATE_SKILL = Path(
+    "plugins/fuse-bead-designer/skills/update-fuse-bead-designer/SKILL.md"
+)
+UPDATE_REFERENCE = Path(
+    "plugins/fuse-bead-designer/skills/create-fuse-bead-patterns/"
+    "references/update-discovery.md"
+)
+
+
+def test_pattern_skill_checks_updates_without_blocking_generation():
+    skill = CREATE_SKILL.read_text(encoding="utf-8")
+
+    assert "scripts/check_update.py" in skill
+    assert "Do not use `--force` during ordinary pattern generation." in skill
+    assert "Only surface `update-available`" in skill
+    assert "continue the pattern task" in skill
+
+
+def test_update_skill_requires_confirmation_verification_and_rollback():
+    skill = UPDATE_SKILL.read_text(encoding="utf-8")
+
+    for phrase in (
+        "确认更新到 v",
+        "exact stable tag",
+        "record the installed version",
+        "restore the previous stable tag",
+        "verify the installed version",
+        "start a new task",
+    ):
+        assert phrase in skill
+    for forbidden in ("track `main`", "run examples", "create a virtual environment"):
+        assert forbidden in skill
+
+
+def test_update_reference_defines_statuses_interval_and_host_boundary():
+    reference = UPDATE_REFERENCE.read_text(encoding="utf-8")
+
+    for status in ("recent", "up-to-date", "update-available", "unavailable"):
+        assert status in reference
+    assert "24-hour" in reference
+    assert "standalone" in reference
+    assert "Do not bypass host permission prompts." in reference
+
+
 def test_chinese_readme_is_primary():
     chinese = Path("README.md").read_text(encoding="utf-8")
     english = Path("README.en.md").read_text(encoding="utf-8")

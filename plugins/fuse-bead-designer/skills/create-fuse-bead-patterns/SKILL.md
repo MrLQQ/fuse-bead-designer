@@ -24,44 +24,53 @@ manufacturing metadata, never a target used to resample the art.
 
 Perform these steps in order:
 
-1. Inspect the image at full size; do not downsample existing pixel art merely
+1. From this skill directory, run `python scripts/check_update.py` and parse
+   its one JSON result. Do not use `--force` during ordinary pattern generation.
+   Only surface `update-available` as a concise notice with its returned
+   versioned confirmation prompt in the final response; discard `recent`,
+   `up-to-date`, and `unavailable`. If the command cannot run or its output is
+   unusable, discard it and continue the pattern task. This check never blocks
+   classification, compilation, verification, or delivery. Read
+   [update-discovery.md](references/update-discovery.md) only when the update
+   behavior needs clarification.
+2. Inspect the image at full size; do not downsample existing pixel art merely
    to make a smaller pattern.
-2. Classify the original as `finished-bead-photo`, `pixel-art`, or
+3. Classify the original as `finished-bead-photo`, `pixel-art`, or
    `high-resolution-image`. `pattern-draft` is the compiler-ready intermediate.
    Read [input-routing.md](references/input-routing.md) and follow that source
    branch and its stop conditions.
-3. Identify one intended subject and every interference source (hands, tools,
+4. Identify one intended subject and every interference source (hands, tools,
    table, shadows, glare, pegboard, reflections, or background). Stop and ask
    the user to choose if multiple plausible subjects remain.
-4. Prepare the route input. Rectify a finished-bead photo into a declared grid;
+5. Prepare the route input. Rectify a finished-bead photo into a declared grid;
    preserve pixel art's logical pixels; use image generation or editing to
    create a semantic pattern draft for a high-resolution image. Follow
    [pattern-draft-contract.md](references/pattern-draft-contract.md) whenever
    creating or restoring a draft.
-5. Mark uncertainty before compiling. Infer only a small, structurally
+6. Mark uncertainty before compiling. Infer only a small, structurally
    recoverable occlusion; record its cells and use `inferred-low`. A large,
    identity-defining, or unresolved occlusion is `review-required`; stop when
    the host cannot resolve it safely. Never treat a hand as beads.
-6. Verify the actual logical grid mechanically. Requested image dimensions and
+7. Verify the actual logical grid mechanically. Requested image dimensions and
    raster display dimensions are not grid evidence. Require declared logical
    dimensions or unique nearest-neighbor recovery. Always fail on ambiguous grid recovery
    instead of treating display pixels as beads.
-7. Choose a practical bead budget that preserves silhouette, eyes, facial
+8. Choose a practical bead budget that preserves silhouette, eyes, facial
    marks, and signature ornaments. Fix the logical pattern dimensions, then
    derive the 29-cell board layout. Honor explicit user constraints, but do not
    force the pattern onto standard-board multiples.
-8. Select the palette. Use only a supplied brand/inventory palette when
+9. Select the palette. Use only a supplied brand/inventory palette when
    provided; never invent brand codes. Read
    [palette-format.md](references/palette-format.md) when making or using a
    palette file.
-9. Run the bundled compiler yourself on the verified grid as described in
+10. Run the bundled compiler yourself on the verified grid as described in
    **Internal execution**. Do not manually calculate, copy, or amend counts. For
    `pixel-art` and `pattern-draft`, singleton cleanup is disabled by default.
-10. Open the generated template and compare it with the source and draft.
+11. Open the generated template and compare it with the source and draft.
     Recheck silhouette and every identity feature before delivery. If the
     practical bead budget was missed or identity was flattened, revise the
     draft/grid and compile again.
-11. Report artifact paths and the verification state. Use “confirmed” only for
+12. Report artifact paths and the verification state. Use “confirmed” only for
    `verified`; label `inferred-low` as provisional reconstruction and
    `review-required` quantities as provisional pending user confirmation. Read
    [output-format.md](references/output-format.md) for the delivery checklist.

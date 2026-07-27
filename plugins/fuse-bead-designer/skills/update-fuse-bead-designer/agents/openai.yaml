@@ -1,0 +1,4 @@
+interface:
+  display_name: "Update Fuse Bead Designer"
+  short_description: "Safely check and update the plugin"
+  default_prompt: "Check Fuse Bead Designer for a stable update and update it only after I confirm the exact version."
