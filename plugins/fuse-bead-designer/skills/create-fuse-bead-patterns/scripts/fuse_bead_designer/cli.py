@@ -106,13 +106,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             has_pattern_draft=arguments.draft_input is not None,
             legacy_resample=arguments.legacy_resample,
         )
-        _validate_verification_for_route(arguments)
+        inferred_cells = _parse_coordinates(arguments.inferred_cells)
+        _validate_verification_for_route(arguments, inferred_cells)
         arguments.sampling = arguments.sampling or arguments.route_policy.sampling
         arguments.cleanup = arguments.cleanup or arguments.route_policy.cleanup
         output_dir = Path(arguments.output_dir)
         _validate_output_dir(output_dir, arguments.force)
 
-        inferred_cells = _parse_coordinates(arguments.inferred_cells)
         protected_cells = _parse_coordinates(arguments.protect_cells)
         palette = load_palette(arguments.palette)
         exact_route = (
@@ -316,7 +316,17 @@ def _validate_paired_size(arguments: argparse.Namespace, parser: argparse.Argume
         parser.error("--width and --height must be provided together")
 
 
-def _validate_verification_for_route(arguments: argparse.Namespace) -> None:
+def _validate_verification_for_route(
+    arguments: argparse.Namespace,
+    inferred_cells: list[tuple[int, int]],
+) -> None:
+    if (
+        inferred_cells
+        and arguments.verification == VerificationState.VERIFIED.value
+    ):
+        raise ValueError(
+            "inferred cells require inferred-low or review-required verification"
+        )
     if (
         arguments.classification == "high-resolution-image"
         and arguments.verification == VerificationState.VERIFIED.value

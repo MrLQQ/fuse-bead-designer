@@ -605,7 +605,47 @@ def test_cli_loads_the_requested_palette_without_fabricating_brand_metadata(tmp_
         assert list(csv.DictReader(stream))[0]["brand_code"] == ""
 
 
-def test_cli_creates_review_output_for_inferred_cells(tmp_path, clean_subject_path):
+@pytest.mark.parametrize(
+    ("classification_options", "verification_options"),
+    [
+        ((), ()),
+        (("--classification", "pixel-art"), ("--verification", "verified")),
+    ],
+    ids=("default-verified", "explicit-verified"),
+)
+def test_cli_rejects_verified_output_with_inferred_cells(
+    tmp_path,
+    clean_subject_path,
+    classification_options,
+    verification_options,
+):
+    output = tmp_path / "out"
+    result = run_cli(
+        clean_subject_path,
+        output,
+        "--width",
+        "29",
+        "--height",
+        "29",
+        *classification_options,
+        *verification_options,
+        "--inferred-cells",
+        "0,0",
+    )
+
+    assert result.returncode == 2
+    assert (
+        "inferred cells require inferred-low or review-required verification"
+        in result.stderr
+    )
+    assert "Traceback" not in result.stderr
+    assert not output.exists()
+
+
+@pytest.mark.parametrize("verification", ["inferred-low", "review-required"])
+def test_cli_creates_review_output_for_inferred_cells(
+    tmp_path, clean_subject_path, verification
+):
     output = tmp_path / "out"
     result = run_cli(
         clean_subject_path,
@@ -615,15 +655,18 @@ def test_cli_creates_review_output_for_inferred_cells(tmp_path, clean_subject_pa
         "--height",
         "29",
         "--verification",
-        "inferred-low",
+        verification,
         "--inferred-cells",
         "0,0",
     )
 
     assert result.returncode == 0, result.stderr
     assert (output / "review.png").is_file()
-    assert read_pattern(output)["inferred_cells"] == [[0, 0]]
+    pattern = read_pattern(output)
+    assert pattern["verification"] == verification
+    assert pattern["inferred_cells"] == [[0, 0]]
     report = json.loads((output / "report.json").read_text(encoding="utf-8"))
+    assert report["verification"] == verification
     assert report["inferred_cells"] == [[0, 0]]
 
 
